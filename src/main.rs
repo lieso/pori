@@ -56,7 +56,7 @@ async fn init_browser() -> Result<Browser, Errors> {
 
     Browser::new(
        LaunchOptions {
-           headless: true,
+           headless: false,
            ..Default::default()
        }
     ).map_err(|e| Errors::BrowserError(format!("Could not start web browser: {}",

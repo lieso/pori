@@ -12,6 +12,15 @@ pub struct Context {
 }
 
 impl Context {
+    pub fn new(provider: Arc<YamlFileProvider>, browser: Browser) -> Self {
+        Context {
+            browser,
+            provider,
+            url: None,
+            mode: Mode::Search
+        }
+    }
+
     pub fn get_url(&self) -> Option<String> {
         self.url.clone()
     }
@@ -56,12 +65,15 @@ impl Context {
         self.mode = mode;
     }
 
-    pub fn new(provider: Arc<YamlFileProvider>, browser: Browser) -> Self {
-        Context {
-            browser,
-            provider,
-            url: None,
-            mode: Mode::Search
+    pub fn visit(&self) {
+        if let Some(url) = self.get_url() {
+
+            let tab = self.browser.new_tab().expect("Could not create new tab");
+
+            tab.navigate_to(&url).expect("Could not navigate");
+
+            tab.wait_until_navigated().expect("Could not wait");
+
         }
     }
 }

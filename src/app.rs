@@ -92,7 +92,10 @@ impl App {
                 }
             }
             KeyCode::Enter => {
-                // No-op
+                let mut lock = write_lock!(self.context);
+                if let Mode::Search = lock.get_mode() {
+                    lock.visit();
+                }
             },
             _ => {}
         }
