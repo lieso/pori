@@ -87,17 +87,17 @@ impl Digest {
 }
 
 pub struct ContentItem {
-    pub title: String,
-    pub content: String,
-    pub url: String,
-    pub discussion_url: String,
-    pub author: Author,
-    pub timestamp: String,
-    pub score: String,
-    pub tags: Vec<String>,
+    pub title: Option<String>,
+    pub content: Option<String>,
+    pub url: Option<String>,
+    pub discussion_url: Option<String>,
+    pub author: Option<Author>,
+    pub timestamp: Option<String>,
+    pub score: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 
 pub struct Author {
-    pub name: String,
-    pub url: String,
+    pub name: Option<String>,
+    pub url: Option<String>,
 }
