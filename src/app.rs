@@ -76,6 +76,9 @@ impl App {
                 if let Mode::Normal = lock.get_mode() {
                     lock.set_mode(Mode::Search);
                 }
+                if let Mode::Search = lock.get_mode() {
+                    lock.append_char('/');
+                }
             }
             KeyCode::Char(c) => {
                 let mut lock = write_lock!(self.context);
