@@ -1,31 +1,29 @@
-use ratatui::{text::Text, Frame};
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use std::sync::{Arc, RwLock};
+use ratatui;
 use headless_chrome::{Browser, LaunchOptions};
-use clap::{Arg, App};
+use clap::{Arg, App as ClapApp};
 
+mod app;
 mod context;
+mod macros;
 mod prelude;
 mod types;
 
 use crate::prelude::*;
 use crate::context::Context;
+use crate::app::App;
 
 const VERSION: &str = "0.0.0";
 const PROGRAM_NAME: &str = "pori";
 
 fn parse_arguments() -> clap::ArgMatches {
-    App::new(PROGRAM_NAME)
+    ClapApp::new(PROGRAM_NAME)
         .version(VERSION)
         .arg(Arg::with_name("version")
             .short('v')
             .long("version")
             .help("Display program version"))
         .get_matches()
-}
-
-fn draw(frame: &mut Frame) {
-    let text = Text::raw("Hello World!");
-    frame.render_widget(text, frame.area());
 }
 
 async fn run() -> Result<(), Errors> {
@@ -44,7 +42,15 @@ async fn run() -> Result<(), Errors> {
 
 
 
-    let mut context = Context::new();
+    let mut context = Arc::new(RwLock::new(Context::new()));
+
+
+
+
+    let app_result = App::new(context).run(&mut terminal);
+
+
+
 
 
 
@@ -66,44 +72,6 @@ async fn run() -> Result<(), Errors> {
 
 
 
-    loop {
-        terminal.draw(draw).expect("failed to draw frame");
-
-        match event::read().expect("Could not read event") {
-            Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Char('q') => match context.get_mode() {
-                    Mode::Normal => break,
-                    Mode::Search => {
-                        context.append_char('q');
-                    }
-                },
-                KeyCode::Esc => {
-                    context.set_mode(Mode::Normal);
-                }
-                KeyCode::Char('/') => {
-                    if let Mode::Normal = context.get_mode() {
-                        context.set_mode(Mode::Search);
-                    }
-                }
-                KeyCode::Char(c) => {
-                    if let Mode::Search = context.get_mode() {
-                        context.append_char(c);
-                    }
-                }
-                KeyCode::Backspace => {
-                    if let Mode::Search = context.get_mode() {
-                        context.remove_last_char();
-                    }
-                }
-                KeyCode::Enter => {
-                    // No-op
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-
-    }
 
 
     ratatui::restore();

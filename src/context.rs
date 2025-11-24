@@ -18,6 +18,14 @@ impl Context {
     pub fn has_url(&self) -> bool {
         self.url.is_some()
     }
+    
+    pub fn url_to_string(&self) -> String {
+        if let Some(url) = &self.url {
+            url.clone()
+        } else {
+            String::new()
+        }
+    }
 
     pub fn append_char(&mut self, ch: char) {
         if self.url.is_none() {
