@@ -2,6 +2,8 @@ use ratatui::{text::Text, Frame};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use headless_chrome::{Browser, LaunchOptions};
 
+mod context;
+
 fn main() {
     let mut terminal = ratatui::init();
 
