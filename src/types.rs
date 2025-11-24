@@ -1,6 +1,7 @@
 #[derive(Clone, Debug)]
 pub enum Errors {
-    UnexpectedError,
+    UnexpectedError(String),
+    ProviderError(String),
 }
 
 #[derive(Clone, Debug)]

@@ -2,6 +2,9 @@ use std::sync::{Arc, RwLock};
 use ratatui;
 use headless_chrome::{Browser, LaunchOptions};
 use clap::{Arg, App as ClapApp};
+use parversion::provider::{Provider};
+use parversion::provider::yaml::{YamlFileProvider};
+use std::fs;
 
 mod app;
 mod context;
@@ -27,6 +30,25 @@ fn parse_arguments() -> clap::ArgMatches {
         .get_matches()
 }
 
+async fn init_provider() -> Result<Arc<impl Provider>, Errors> {
+    log::info!("Initializing data provider...");
+
+    log::info!("Using yaml file provider");
+
+    let data_dir = dirs::data_dir()
+        .ok_or_else(|| Errors::ProviderError("Could not find data directory".into()))?;
+
+    let provider_path = data_dir.join(PROGRAM_NAME).join("provider.yaml");
+    
+    if let Some(parent_dir) = provider_path.parent() {
+        fs::create_dir_all(parent_dir).expect("Unable to create directory");
+    }
+
+    log::debug!("provider_path: {}", provider_path.display());
+
+    Ok(Arc::new(YamlFileProvider::new(provider_path.to_string_lossy().into_owned())))
+}
+
 async fn run() -> Result<(), Errors> {
 
 
@@ -46,6 +68,8 @@ async fn run() -> Result<(), Errors> {
     let mut context = Arc::new(RwLock::new(Context::new()));
 
 
+
+    let provider = init_provider().await?;
 
 
     let app_result = App::new(context).run(&mut terminal);
