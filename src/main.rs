@@ -5,6 +5,7 @@ use clap::{Arg, App as ClapApp};
 use parversion::provider::{Provider};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::fs;
+use std::path::PathBuf;
 
 mod app;
 mod context;
@@ -30,13 +31,14 @@ fn parse_arguments() -> clap::ArgMatches {
         .get_matches()
 }
 
-async fn init_provider() -> Result<Arc<impl Provider>, Errors> {
+async fn init_provider() -> Result<Arc<YamlFileProvider>, Errors> {
     log::info!("Initializing data provider...");
 
     log::info!("Using yaml file provider");
 
-    let data_dir = dirs::data_dir()
-        .ok_or_else(|| Errors::ProviderError("Could not find data directory".into()))?;
+    let data_dir: PathBuf = dirs::data_dir()
+     .ok_or_else(|| Errors::ProviderError("Could not find data
+directory".into()))?;
 
     let provider_path = data_dir.join(PROGRAM_NAME).join("provider.yaml");
     
@@ -49,10 +51,19 @@ async fn init_provider() -> Result<Arc<impl Provider>, Errors> {
     Ok(Arc::new(YamlFileProvider::new(provider_path.to_string_lossy().into_owned())))
 }
 
+async fn init_browser() -> Result<Browser, Errors> {
+    log::info!("Initializing web browser...");
+
+    Browser::new(
+       LaunchOptions {
+           headless: true,
+           ..Default::default()
+       }
+    ).map_err(|e| Errors::BrowserError(format!("Could not start web browser: {}",
+ e)))
+}
+
 async fn run() -> Result<(), Errors> {
-
-
-
     let matches = parse_arguments();
 
     if matches.is_present("version") {
@@ -60,44 +71,17 @@ async fn run() -> Result<(), Errors> {
         return Ok(());
     }
 
-
-    let mut terminal = ratatui::init();
-
-
-
-    let mut context = Arc::new(RwLock::new(Context::new()));
-
-
-
     let provider = init_provider().await?;
 
+    let browser = init_browser().await?;
 
+    let mut context = Arc::new(RwLock::new(Context::new(
+        provider,
+        browser
+    )));
+
+    let mut terminal = ratatui::init();
     let app_result = App::new(context).run(&mut terminal);
-
-
-
-
-
-
-    let browser = Browser::new(
-       LaunchOptions {
-           headless: true,
-           ..Default::default()
-       }
-    ).expect("Could not launch browser");
-
-    let tab = browser.new_tab().expect("Could not create new tab");
-
-    //tab.navigate_to("https://www.rust-lang.org/").expect("Could not navigate");
-    //tab.wait_until_navigated().expect("Could not wait until navigate");
-
-
-
-
-
-
-
-
 
     ratatui::restore();
 

@@ -2,6 +2,7 @@
 pub enum Errors {
     UnexpectedError(String),
     ProviderError(String),
+    BrowserError(String),
 }
 
 #[derive(Clone, Debug)]

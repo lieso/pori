@@ -1,7 +1,12 @@
+use headless_chrome::{Browser};
+use parversion::provider::yaml::{YamlFileProvider};
+use std::sync::Arc;
+
 use crate::prelude::*;
 
-#[derive(Clone, Debug)]
 pub struct Context {
+    browser: Browser,
+    provider: Arc<YamlFileProvider>,
     url: Option<String>,
     mode: Mode,
 }
@@ -51,8 +56,10 @@ impl Context {
         self.mode = mode;
     }
 
-    pub fn new() -> Self {
+    pub fn new(provider: Arc<YamlFileProvider>, browser: Browser) -> Self {
         Context {
+            browser,
+            provider,
             url: None,
             mode: Mode::Search
         }

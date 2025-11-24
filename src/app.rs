@@ -14,7 +14,6 @@ use ratatui::{
 use crate::prelude::*;
 use crate::context::Context;
 
-#[derive(Debug)]
 pub struct App {
     context: Arc<RwLock<Context>>,
     exit: bool,
