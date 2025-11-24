@@ -44,6 +44,7 @@ async fn run() -> Result<(), Errors> {
 
 
 
+    let mut context = Context::new();
 
 
 
@@ -70,7 +71,33 @@ async fn run() -> Result<(), Errors> {
 
         match event::read().expect("Could not read event") {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Char('q') => break,
+                KeyCode::Char('q') => match context.get_mode() {
+                    Mode::Normal => break,
+                    Mode::Search => {
+                        context.append_char('q');
+                    }
+                },
+                KeyCode::Esc => {
+                    context.set_mode(Mode::Normal);
+                }
+                KeyCode::Char('/') => {
+                    if let Mode::Normal = context.get_mode() {
+                        context.set_mode(Mode::Search);
+                    }
+                }
+                KeyCode::Char(c) => {
+                    if let Mode::Search = context.get_mode() {
+                        context.append_char(c);
+                    }
+                }
+                KeyCode::Backspace => {
+                    if let Mode::Search = context.get_mode() {
+                        context.remove_last_char();
+                    }
+                }
+                KeyCode::Enter => {
+                    // No-op
+                }
                 _ => {}
             },
             _ => {}

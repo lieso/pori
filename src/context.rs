@@ -19,6 +19,30 @@ impl Context {
         self.url.is_some()
     }
 
+    pub fn append_char(&mut self, ch: char) {
+        if self.url.is_none() {
+            self.url = Some(String::new());
+        }
+
+        if let Some(url) = &mut self.url {
+            url.push(ch);
+        }
+    }
+
+    pub fn remove_last_char(&mut self) {
+        if let Some(url) = &mut self.url {
+            url.pop();
+        }
+    }
+
+    pub fn get_mode(&self) -> &Mode {
+        &self.mode
+    }
+
+    pub fn set_mode(&mut self, mode: Mode) {
+        self.mode = mode;
+    }
+
     pub fn new() -> Self {
         Context {
             url: None,
