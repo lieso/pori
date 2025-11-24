@@ -5,7 +5,7 @@ use parversion::{translation, document_format};
 use parversion::prelude::Options;
 
 use crate::prelude::*;
-use crate::digest::Digest;
+use crate::digest::{Digest, deserialize_to_digest};
 
 pub struct Context {
     browser: Browser,
@@ -101,9 +101,13 @@ impl Context {
             document,
             &Some(options),
             Digest::get_json_schema()
-        ).await;
+        ).await.map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
 
 
-        Err(Errors::BrowserError("Building Digest not implemented".into()))
+        let digest = deserialize_to_digest(&result.data)
+            .map_err(|e| Errors::TranslationError(format!("Could not deserialize translated content: {}", e)))?;
+
+
+        Ok(digest)
     }
 }

@@ -3,6 +3,7 @@ pub enum Errors {
     UnexpectedError(String),
     ProviderError(String),
     BrowserError(String),
+    TranslationError(String),
 }
 
 #[derive(Clone, Debug)]

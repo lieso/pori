@@ -1669,6 +1669,7 @@ dependencies = [
  "log",
  "parversion",
  "ratatui",
+ "serde",
  "serde_json",
  "simple-logging",
  "tokio",

@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::collections::HashMap;
 
 pub const JSON_SCHEMA: &str = r#"
@@ -75,6 +76,7 @@ pub const JSON_SCHEMA: &str = r#"
 }
 "#;
 
+#[derive(Deserialize, Debug)]
 pub struct Digest {
     pub title: String,
     pub entries: Vec<ContentItem>,
@@ -86,6 +88,7 @@ impl Digest {
     }
 }
 
+#[derive(Deserialize, Debug)]
 pub struct ContentItem {
     pub title: Option<String>,
     pub content: Option<String>,
@@ -97,7 +100,12 @@ pub struct ContentItem {
     pub tags: Option<Vec<String>>,
 }
 
+#[derive(Deserialize, Debug)]
 pub struct Author {
     pub name: Option<String>,
     pub url: Option<String>,
+}
+
+pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, serde_json::Error> {
+    serde_json::from_str(json_data)
 }
