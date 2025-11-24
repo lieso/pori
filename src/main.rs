@@ -8,6 +8,7 @@ mod prelude;
 mod types;
 
 use crate::prelude::*;
+use crate::context::Context;
 
 const VERSION: &str = "0.0.0";
 const PROGRAM_NAME: &str = "pori";
@@ -76,6 +77,8 @@ async fn run() -> Result<(), Errors> {
         }
 
     }
+
+
     ratatui::restore();
 
     Ok(())

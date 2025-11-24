@@ -1,6 +1,9 @@
+use crate::prelude::*;
+
 #[derive(Clone, Debug)]
 pub struct Context {
     url: Option<String>,
+    mode: Mode,
 }
 
 impl Context {
@@ -14,5 +17,12 @@ impl Context {
     
     pub fn has_url(&self) -> bool {
         self.url.is_some()
+    }
+
+    pub fn new() -> Self {
+        Context {
+            url: None,
+            mode: Mode::Search
+        }
     }
 }
