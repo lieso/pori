@@ -27,10 +27,10 @@ impl App {
         }
     }
 
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+    pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
-            self.handle_events()?;
+            self.handle_events().await?;
         }
         Ok(())
     }
@@ -39,17 +39,17 @@ impl App {
         frame.render_widget(self, frame.area());
     }
 
-    fn handle_events(&mut self) -> io::Result<()> {
+    async fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                self.handle_key_event(key_event)
+                self.handle_key_event(key_event).await
             }
             _ => {}
         };
         Ok(())
     }
 
-    fn handle_key_event(&mut self, key_event: KeyEvent) {
+    async fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => {
                 let mode;
@@ -94,7 +94,7 @@ impl App {
             KeyCode::Enter => {
                 let mut lock = write_lock!(self.context);
                 if let Mode::Search = lock.get_mode() {
-                    lock.visit();
+                    lock.visit().await.expect("Could not visit");
                 }
             },
             _ => {}

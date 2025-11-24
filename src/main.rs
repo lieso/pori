@@ -81,7 +81,8 @@ async fn run() -> Result<(), Errors> {
     )));
 
     let mut terminal = ratatui::init();
-    let app_result = App::new(context).run(&mut terminal);
+    let mut app = App::new(context);
+    let result = app.run(&mut terminal).await;
 
     ratatui::restore();
 

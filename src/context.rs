@@ -1,8 +1,11 @@
 use headless_chrome::{Browser};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::sync::Arc;
+use parversion::{translation, document_format};
+use parversion::prelude::Options;
 
 use crate::prelude::*;
+use crate::digest::Digest;
 
 pub struct Context {
     browser: Browser,
@@ -65,15 +68,42 @@ impl Context {
         self.mode = mode;
     }
 
-    pub fn visit(&self) {
-        if let Some(url) = self.get_url() {
+    pub async fn visit(&self) -> Result<Digest, Errors> {
+        let url = self.get_url().ok_or_else(|| {
+            Errors::UnexpectedError("URL not found".into())
+        })?;
 
-            let tab = self.browser.new_tab().expect("Could not create new tab");
+        let tab = self.browser.new_tab()
+            .map_err(|e| Errors::BrowserError(format!("Could not create new tab: {}", e)))?;
 
-            tab.navigate_to(&url).expect("Could not navigate");
+        tab.navigate_to(&url)
+            .map_err(|e| Errors::BrowserError(format!("Could not navigate: {}", e)))?;
 
-            tab.wait_until_navigated().expect("Could not wait");
+        tab.wait_until_navigated()
+            .map_err(|e| Errors::BrowserError(format!("Could not wait: {}", e)))?;
 
-        }
+        let document = tab.evaluate("document.documentElement.outerHTML", false)
+            .map_err(|e| Errors::BrowserError(format!("Could not evaluate JavaScript: {}", e)))?
+            .value
+            .ok_or_else(|| Errors::BrowserError("No content returned".into()))?
+            .as_str()
+            .ok_or_else(|| Errors::BrowserError("Content is not a string".into()))?
+            .to_string();
+
+
+        let options = Options {
+            ..Options::default()
+        };
+
+
+        let result = translation::translate_text_to_document(
+            self.provider.clone(),
+            document,
+            &Some(options),
+            Digest::get_json_schema()
+        ).await;
+
+
+        Err(Errors::BrowserError("Building Digest not implemented".into()))
     }
 }
