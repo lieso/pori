@@ -7,6 +7,7 @@ mod app;
 mod context;
 mod macros;
 mod prelude;
+mod schema;
 mod types;
 
 use crate::prelude::*;
