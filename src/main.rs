@@ -6,6 +6,9 @@ use parversion::provider::{Provider};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::fs;
 use std::path::PathBuf;
+use fern::Dispatch;
+use log::LevelFilter;
+use std::fs::File;
 
 mod app;
 mod context;
@@ -63,7 +66,35 @@ async fn init_browser() -> Result<Browser, Errors> {
  e)))
 }
 
+fn init_logging() {
+    let log_file = File::create("debug.log").expect("Could not create log file");
+
+    Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{date} [{level}] {file}:{line} - {message}",
+                date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+                level = record.level(),
+                file = record.file().unwrap_or("unknown"),
+                line = record.line().unwrap_or(0),
+                message = message
+            ))
+        })
+        .level(LevelFilter::Off)
+        .level_for("parversion", LevelFilter::Trace)
+        .level_for(PROGRAM_NAME, LevelFilter::Trace)
+        .chain(log_file)
+        .apply()
+        .expect("Could not initialize logging");
+}
+
+fn setup() {
+    init_logging();
+}
+
 async fn run() -> Result<(), Errors> {
+    setup();
+
     let matches = parse_arguments();
 
     if matches.is_present("version") {
