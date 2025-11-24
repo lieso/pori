@@ -11,7 +11,7 @@ mod app;
 mod context;
 mod macros;
 mod prelude;
-mod schema;
+mod digest;
 mod types;
 
 use crate::prelude::*;
