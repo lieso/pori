@@ -1,5 +1,9 @@
 use serde::Deserialize;
+use serde_json::{self, Value};
 use std::collections::HashMap;
+use std::error::Error;
+
+use crate::prelude::*;
 
 pub const JSON_SCHEMA: &str = r#"
 {
@@ -78,7 +82,7 @@ pub const JSON_SCHEMA: &str = r#"
 
 #[derive(Deserialize, Debug)]
 pub struct Digest {
-    pub title: String,
+    pub title: Option<String>,
     pub entries: Vec<ContentItem>,
 }
 
@@ -97,7 +101,7 @@ pub struct ContentItem {
     pub author: Option<Author>,
     pub timestamp: Option<String>,
     pub score: Option<String>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -106,6 +110,15 @@ pub struct Author {
     pub url: Option<String>,
 }
 
-pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, serde_json::Error> {
-    serde_json::from_str(json_data)
+pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, Box<dyn Error>> {
+    let value: Value = serde_json::from_str(json_data)?;
+
+    if let Some(obj) = value.as_object() {
+        if let Some(digest_value) = obj.get("digest") {
+            return serde_json::from_value(digest_value.clone()).map_err(|e| e.into());
+        }
+    }
+
+    serde_json::from_value(value).map_err(|e| e.into())
 }
+

@@ -103,7 +103,6 @@ impl Context {
             Digest::get_json_schema()
         ).await.map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
 
-
         let digest = deserialize_to_digest(&result.data)
             .map_err(|e| Errors::TranslationError(format!("Could not deserialize translated content: {}", e)))?;
 
