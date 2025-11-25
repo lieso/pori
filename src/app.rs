@@ -7,15 +7,18 @@ use ratatui::{
     style::Stylize,
     symbols::border,
     text::{Line, Text, Span},
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Widget, List, ListDirection, ListItem},
     DefaultTerminal, Frame,
+    prelude::*
 };
 
 use crate::prelude::*;
 use crate::context::Context;
+use crate::digest::Digest;
 
 pub struct App {
     context: Arc<RwLock<Context>>,
+    digest: Option<Digest>,
     exit: bool,
 }
 
@@ -24,6 +27,7 @@ impl App {
         App {
             context,
             exit: false,
+            digest: None,
         }
     }
 
@@ -94,7 +98,9 @@ impl App {
             KeyCode::Enter => {
                 let mut lock = write_lock!(self.context);
                 if let Mode::Search = lock.get_mode() {
-                    lock.visit().await.expect("Could not visit");
+                    let digest = lock.visit().await.expect("Could not visit");
+
+                    self.digest = Some(digest);
                 }
             },
             _ => {}
@@ -108,14 +114,22 @@ impl App {
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
+
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(5),
+                Constraint::Percentage(95),
+            ])
+            .split(area);
+
+
+
+
+
         let title = Line::from(" pori ".bold());
-        let instructions = Line::from(vec![
-            " Quit ".into(),
-            "<Q> ".blue().bold(),
-        ]);
         let block = Block::bordered()
             .title(title.centered())
-            .title_bottom(instructions.centered())
             .border_set(border::THICK);
 
         let url = {
@@ -131,6 +145,29 @@ impl Widget for &App {
         Paragraph::new(search_text)
             .centered()
             .block(block)
-            .render(area, buf);
+            .render(layout[0], buf);
+
+
+        if let Some(digest) = &self.digest {
+
+            let items: Vec<String> = digest.entries.iter().map(|entry| {
+                entry
+                    .title
+                    .clone()
+                    .unwrap_or_else(|| "Untitled".to_string())
+            }).collect();
+
+            let list = List::new(items)
+                .block(Block::bordered().title("Entries"))
+                .style(Style::new().white())
+                .highlight_style(Style::new().italic())
+                .highlight_symbol(">>")
+                .repeat_highlight_symbol(true)
+                .direction(ListDirection::TopToBottom);
+
+
+            Widget::render(list, layout[1], buf);
+
+        }
     }
 }
