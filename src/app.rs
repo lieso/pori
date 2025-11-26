@@ -120,8 +120,8 @@ impl Widget for &App {
         let layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Percentage(5),
-                Constraint::Percentage(95),
+                Constraint::Length(3),
+                Constraint::Min(0)
             ])
             .split(area);
 
