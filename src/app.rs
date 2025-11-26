@@ -101,6 +101,8 @@ impl App {
                     let digest = lock.visit().await.expect("Could not visit");
 
                     self.digest = Some(digest);
+
+                    lock.set_mode(Mode::Normal);
                 }
             },
             _ => {}
