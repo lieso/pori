@@ -139,10 +139,20 @@ impl Widget for &App {
             lock.url_to_string()
         };
 
-        let search_text = Text::from(vec![Line::from(vec![
-            Span::raw("Search: "),
-            Span::raw(url),
-        ])]);
+        let search_text = {
+            let lock = read_lock!(self.context);
+            
+            if let Mode::Search = lock.get_mode() {
+                Text::from(vec![Line::from(vec![
+                    Span::raw("Navigate: ").white(),
+                    Span::raw(url),
+                ])])
+            } else {
+                Text::from(vec![Line::from(vec![
+                    Span::raw(url),
+                ])])
+            }
+        };
 
         Paragraph::new(search_text)
             .centered()
