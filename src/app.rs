@@ -19,7 +19,6 @@ use crate::prelude::*;
 use crate::context::Context;
 use crate::digest::Digest;
 
-const ENTRY_TITLE_FG_COLOR: Color = RED.c500;
 const ENTRY_DETAILS_FG_COLOR: Color = GREEN.c500;
 
 struct EntryListItem {
@@ -96,13 +95,7 @@ impl App {
                 lock.remove_last_char();
             }
             KeyCode::Enter => {
-                let mut lock = write_lock!(self.context);
-
-                let digest = lock.visit().await.expect("Could not visit");
-
-                self.digest = Some(digest);
-
-                lock.set_mode(Mode::Interaction);
+                self.navigate().await;
             },
             _ => {}
         }
@@ -110,14 +103,17 @@ impl App {
 
     async fn handle_interaction_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
+            KeyCode::Char('j') => {
+                self.select_next();
+            },
+            KeyCode::Char('k') => {
+                self.select_previous();
+            },
             KeyCode::Char('q') => {
                 self.exit();
             },
-            KeyCode::Char('j') => {
-                self.select_previous();
-            },
-            KeyCode::Char('k') => {
-                self.select_next();
+            KeyCode::Char('r') => {
+                self.refresh();
             },
             KeyCode::Char('/') => {
                 let mut lock = write_lock!(self.context);
@@ -142,6 +138,17 @@ impl App {
 
     fn exit(&mut self) {
         self.exit = true;
+    }
+
+    async fn refresh(&mut self) {
+        self.navigate().await;
+    }
+
+    async fn navigate(&mut self) {
+        let mut lock = write_lock!(self.context);
+        let digest = lock.visit().await.expect("Could not visit");
+        self.digest = Some(digest);
+        lock.set_mode(Mode::Interaction);
     }
 
     fn select_previous(&mut self) {
@@ -200,7 +207,7 @@ impl App {
 
                     let title_line = Line::styled(
                         title,
-                        Style::default().fg(ENTRY_TITLE_FG_COLOR)
+                        Style::default().bold()
                     );
 
                     let details_line = Line::styled(
@@ -216,7 +223,6 @@ impl App {
 
             let list = List::new(items)
                 .block(Block::bordered().title("Entries"))
-                .style(Style::new().bold())
                 .highlight_style(Style::new().italic())
                 .highlight_symbol(">>")
                 .repeat_highlight_symbol(true);
