@@ -4,10 +4,13 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::Stylize,
     symbols::border,
     text::{Line, Text, Span},
-    widgets::{Block, Borders, Paragraph, Widget, List, ListDirection, ListItem},
+    style::{
+        palette::tailwind::{BLUE, GREEN, SLATE},
+        Color, Modifier, Style, Stylize,
+    },
+    widgets::{Block, Borders, Paragraph, Widget, List, ListDirection, ListItem, ListState, StatefulWidget},
     DefaultTerminal, Frame,
     prelude::*
 };
@@ -16,18 +19,34 @@ use crate::prelude::*;
 use crate::context::Context;
 use crate::digest::Digest;
 
+const TEXT_FG_COLOR: Color = SLATE.c200;
+
+struct EntryListItem {
+    title: String,
+}
+
+struct EntryList {
+    items: Vec<EntryListItem>,
+    state: ListState,
+}
+
 pub struct App {
     context: Arc<RwLock<Context>>,
     digest: Option<Digest>,
     exit: bool,
+    entry_list: EntryList,
 }
 
 impl App {
     pub fn new(context: Arc<RwLock<Context>>) -> Self {
-        App {
+        Self {
             context,
             exit: false,
             digest: None,
+            entry_list: EntryList {
+                items: vec![],
+                state: ListState::default(),
+            }
         }
     }
 
@@ -39,7 +58,7 @@ impl App {
         Ok(())
     }
 
-    fn draw(&self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         frame.render_widget(self, frame.area());
     }
 
@@ -114,7 +133,41 @@ impl App {
     }
 }
 
-impl Widget for &App {
+impl App {
+    fn render_entries(&mut self, area: Rect, buf: &mut Buffer) {
+        if let Some(digest) = &self.digest {
+
+            let items: Vec<ListItem> = digest
+                .entries
+                .iter()
+                .map(|entry| {
+
+                    let title = entry
+                        .title
+                        .clone()
+                        .unwrap_or_else(|| "Untitled".to_string());
+
+                    let line = Line::styled(title, Style::default().fg(TEXT_FG_COLOR));
+
+                    ListItem::new(line)
+                })
+                .collect();
+
+            let list = List::new(items)
+                .block(Block::bordered().title("Entries"))
+                .style(Style::new().bold())
+                .highlight_style(Style::new().italic())
+                .highlight_symbol(">>")
+                .repeat_highlight_symbol(true)
+                .direction(ListDirection::TopToBottom);
+
+
+            StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
+        }
+    }
+}
+
+impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
 
         let layout = Layout::default()
@@ -160,26 +213,12 @@ impl Widget for &App {
             .render(layout[0], buf);
 
 
+
+
+
+
         if let Some(digest) = &self.digest {
-
-            let items: Vec<String> = digest.entries.iter().map(|entry| {
-                entry
-                    .title
-                    .clone()
-                    .unwrap_or_else(|| "Untitled".to_string())
-            }).collect();
-
-            let list = List::new(items)
-                .block(Block::bordered().title("Entries"))
-                .style(Style::new().white())
-                .highlight_style(Style::new().italic())
-                .highlight_symbol(">>")
-                .repeat_highlight_symbol(true)
-                .direction(ListDirection::TopToBottom);
-
-
-            Widget::render(list, layout[1], buf);
-
+            self.render_entries(layout[1], buf);
         }
     }
 }
