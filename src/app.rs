@@ -7,7 +7,7 @@ use ratatui::{
     symbols::border,
     text::{Line, Text, Span},
     style::{
-        palette::tailwind::{BLUE, GREEN, SLATE},
+        palette::tailwind::{RED, BLUE, GREEN, SLATE},
         Color, Modifier, Style, Stylize,
     },
     widgets::{Block, Borders, Paragraph, Widget, List, ListDirection, ListItem, ListState, StatefulWidget},
@@ -19,7 +19,8 @@ use crate::prelude::*;
 use crate::context::Context;
 use crate::digest::Digest;
 
-const TEXT_FG_COLOR: Color = SLATE.c200;
+const ENTRY_TITLE_FG_COLOR: Color = RED.c500;
+const ENTRY_DETAILS_FG_COLOR: Color = GREEN.c500;
 
 struct EntryListItem {
     title: String,
@@ -185,7 +186,7 @@ impl App {
             .render(area, buf);
     }
 
-    fn render_entries(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
         if let Some(digest) = &self.digest {
             let items: Vec<ListItem> = digest
                 .entries
@@ -197,9 +198,19 @@ impl App {
                         .clone()
                         .unwrap_or_else(|| "Untitled".to_string());
 
-                    let line = Line::styled(title, Style::default().fg(TEXT_FG_COLOR));
+                    let title_line = Line::styled(
+                        title,
+                        Style::default().fg(ENTRY_TITLE_FG_COLOR)
+                    );
 
-                    ListItem::new(line)
+                    let details_line = Line::styled(
+                        entry.to_details_string(),
+                        Style::default().fg(ENTRY_DETAILS_FG_COLOR)
+                    );
+
+                    let text = Text::from(vec![title_line, details_line]);
+
+                    ListItem::new(text)
                 })
                 .collect();
 
@@ -227,9 +238,6 @@ impl Widget for &mut App {
             .split(area);
 
         self.render_header(layout[0], buf);
-
-        if let Some(digest) = &self.digest {
-            self.render_entries(layout[1], buf);
-        }
+        self.render_body(layout[1], buf);
     }
 }

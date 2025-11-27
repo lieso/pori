@@ -104,6 +104,34 @@ pub struct ContentItem {
     pub tags: Option<String>,
 }
 
+impl ContentItem {
+    pub fn to_details_string(&self) -> String {
+        let mut result = String::new();
+
+        if let Some(content) = &self.content {
+            result = format!("{} - {}", result, content);
+        }
+
+        if let Some(url) = &self.url {
+            result = format!("{} - {}", result, url);
+        }
+
+        if let Some(discussion_url) = &self.discussion_url {
+            result = format!("{} - {}", result, discussion_url);
+        }
+
+        if let Some(timestamp) = &self.timestamp {
+            result = format!("{} - {}", result, timestamp);
+        }
+
+        if let Some(score) = &self.score {
+            result = format!("{} - {}", result, score);
+        }
+
+        result
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct Author {
     pub name: Option<String>,
