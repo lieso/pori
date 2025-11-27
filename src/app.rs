@@ -72,22 +72,11 @@ impl App {
         Ok(())
     }
 
-    async fn handle_key_event(&mut self, key_event: KeyEvent) {
+    async fn handle_navigation_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => {
-                let mode;
-                {
-                    let mut lock = write_lock!(self.context);
-                    mode = lock.get_mode().clone();
-
-                    if let Mode::Navigation = mode {
-                        lock.append_char('q');
-                    }
-                }
-
-                if let Mode::Interaction = mode {
-                    self.exit();
-                }
+                let mut lock = write_lock!(self.context);
+                lock.append_char('q');
             },
             KeyCode::Esc => {
                 let mut lock = write_lock!(self.context);
@@ -95,36 +84,52 @@ impl App {
             }
             KeyCode::Char('/') => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Interaction = lock.get_mode() {
-                    lock.set_mode(Mode::Navigation);
-                }
-                if let Mode::Navigation = lock.get_mode() {
-                    lock.append_char('/');
-                }
+                lock.append_char('/');
             }
             KeyCode::Char(c) => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Navigation = lock.get_mode() {
-                    lock.append_char(c);
-                }
+                lock.append_char(c);
             }
             KeyCode::Backspace => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Navigation = lock.get_mode() {
-                    lock.remove_last_char();
-                }
+                lock.remove_last_char();
             }
             KeyCode::Enter => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Navigation = lock.get_mode() {
-                    let digest = lock.visit().await.expect("Could not visit");
 
-                    self.digest = Some(digest);
+                let digest = lock.visit().await.expect("Could not visit");
 
-                    lock.set_mode(Mode::Interaction);
-                }
+                self.digest = Some(digest);
+
+                lock.set_mode(Mode::Interaction);
             },
             _ => {}
+        }
+    }
+
+    async fn handle_interaction_key_event(&mut self, key_event: KeyEvent) {
+        match key_event.code {
+            KeyCode::Char('q') => {
+                self.exit();
+            },
+            KeyCode::Char('/') => {
+                let mut lock = write_lock!(self.context);
+                lock.set_mode(Mode::Navigation);
+            }
+            _ => {}
+        }
+    }
+
+    async fn handle_key_event(&mut self, key_event: KeyEvent) {
+        let current_mode = {
+            let lock = read_lock!(self.context);
+
+            lock.get_mode().clone()
+        };
+
+        match current_mode {
+            Mode::Navigation => self.handle_navigation_key_event(key_event).await,
+            Mode::Interaction => self.handle_interaction_key_event(key_event).await,
         }
     }
 
