@@ -112,6 +112,12 @@ impl App {
             KeyCode::Char('q') => {
                 self.exit();
             },
+            KeyCode::Char('j') => {
+                self.select_previous();
+            },
+            KeyCode::Char('k') => {
+                self.select_next();
+            },
             KeyCode::Char('/') => {
                 let mut lock = write_lock!(self.context);
                 lock.set_mode(Mode::Navigation);
@@ -135,6 +141,14 @@ impl App {
 
     fn exit(&mut self) {
         self.exit = true;
+    }
+
+    fn select_previous(&mut self) {
+        self.entry_list.state.select_previous();
+    }
+
+    fn select_next(&mut self) {
+        self.entry_list.state.select_next();
     }
 }
 
