@@ -20,7 +20,7 @@ impl Context {
             browser,
             provider,
             url: None,
-            mode: Mode::Search
+            mode: Mode::Navigation
         }
     }
 

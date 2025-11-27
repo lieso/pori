@@ -80,48 +80,48 @@ impl App {
                     let mut lock = write_lock!(self.context);
                     mode = lock.get_mode().clone();
 
-                    if let Mode::Search = mode {
+                    if let Mode::Navigation = mode {
                         lock.append_char('q');
                     }
                 }
 
-                if let Mode::Normal = mode {
+                if let Mode::Interaction = mode {
                     self.exit();
                 }
             },
             KeyCode::Esc => {
                 let mut lock = write_lock!(self.context);
-                lock.set_mode(Mode::Normal);
+                lock.set_mode(Mode::Interaction);
             }
             KeyCode::Char('/') => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Normal = lock.get_mode() {
-                    lock.set_mode(Mode::Search);
+                if let Mode::Interaction = lock.get_mode() {
+                    lock.set_mode(Mode::Navigation);
                 }
-                if let Mode::Search = lock.get_mode() {
+                if let Mode::Navigation = lock.get_mode() {
                     lock.append_char('/');
                 }
             }
             KeyCode::Char(c) => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Search = lock.get_mode() {
+                if let Mode::Navigation = lock.get_mode() {
                     lock.append_char(c);
                 }
             }
             KeyCode::Backspace => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Search = lock.get_mode() {
+                if let Mode::Navigation = lock.get_mode() {
                     lock.remove_last_char();
                 }
             }
             KeyCode::Enter => {
                 let mut lock = write_lock!(self.context);
-                if let Mode::Search = lock.get_mode() {
+                if let Mode::Navigation = lock.get_mode() {
                     let digest = lock.visit().await.expect("Could not visit");
 
                     self.digest = Some(digest);
 
-                    lock.set_mode(Mode::Normal);
+                    lock.set_mode(Mode::Interaction);
                 }
             },
             _ => {}
@@ -148,7 +148,7 @@ impl App {
         let search_text = {
             let lock = read_lock!(self.context);
             
-            if let Mode::Search = lock.get_mode() {
+            if let Mode::Navigation = lock.get_mode() {
                 Text::from(vec![Line::from(vec![
                     Span::raw("Navigate: ").white(),
                     Span::raw(url),

@@ -8,6 +8,6 @@ pub enum Errors {
 
 #[derive(Clone, Debug)]
 pub enum Mode {
-    Normal,
-    Search
+    Interaction,
+    Navigation,
 }
