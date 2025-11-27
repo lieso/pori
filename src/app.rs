@@ -134,54 +134,7 @@ impl App {
 }
 
 impl App {
-    fn render_entries(&mut self, area: Rect, buf: &mut Buffer) {
-        if let Some(digest) = &self.digest {
-
-            let items: Vec<ListItem> = digest
-                .entries
-                .iter()
-                .map(|entry| {
-
-                    let title = entry
-                        .title
-                        .clone()
-                        .unwrap_or_else(|| "Untitled".to_string());
-
-                    let line = Line::styled(title, Style::default().fg(TEXT_FG_COLOR));
-
-                    ListItem::new(line)
-                })
-                .collect();
-
-            let list = List::new(items)
-                .block(Block::bordered().title("Entries"))
-                .style(Style::new().bold())
-                .highlight_style(Style::new().italic())
-                .highlight_symbol(">>")
-                .repeat_highlight_symbol(true)
-                .direction(ListDirection::TopToBottom);
-
-
-            StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
-        }
-    }
-}
-
-impl Widget for &mut App {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-
-        let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(3),
-                Constraint::Min(0)
-            ])
-            .split(area);
-
-
-
-
-
+    fn render_header(&mut self, area: Rect, buf: &mut Buffer) {
         let title = Line::from(" pori ".bold());
         let block = Block::bordered()
             .title(title.centered())
@@ -210,12 +163,51 @@ impl Widget for &mut App {
         Paragraph::new(search_text)
             .centered()
             .block(block)
-            .render(layout[0], buf);
+            .render(area, buf);
+    }
 
+    fn render_entries(&mut self, area: Rect, buf: &mut Buffer) {
+        if let Some(digest) = &self.digest {
+            let items: Vec<ListItem> = digest
+                .entries
+                .iter()
+                .map(|entry| {
 
+                    let title = entry
+                        .title
+                        .clone()
+                        .unwrap_or_else(|| "Untitled".to_string());
 
+                    let line = Line::styled(title, Style::default().fg(TEXT_FG_COLOR));
 
+                    ListItem::new(line)
+                })
+                .collect();
 
+            let list = List::new(items)
+                .block(Block::bordered().title("Entries"))
+                .style(Style::new().bold())
+                .highlight_style(Style::new().italic())
+                .highlight_symbol(">>")
+                .repeat_highlight_symbol(true)
+                .direction(ListDirection::TopToBottom);
+
+            StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
+        }
+    }
+}
+
+impl Widget for &mut App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Length(3),
+                Constraint::Min(0)
+            ])
+            .split(area);
+
+        self.render_header(layout[0], buf);
 
         if let Some(digest) = &self.digest {
             self.render_entries(layout[1], buf);
