@@ -219,8 +219,7 @@ impl App {
                 .style(Style::new().bold())
                 .highlight_style(Style::new().italic())
                 .highlight_symbol(">>")
-                .repeat_highlight_symbol(true)
-                .direction(ListDirection::TopToBottom);
+                .repeat_highlight_symbol(true);
 
             StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
         }

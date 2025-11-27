@@ -108,24 +108,26 @@ impl ContentItem {
     pub fn to_details_string(&self) -> String {
         let mut result = String::new();
 
+        if let Some(score) = &self.score {
+            result = format!("{}", score);
+        }
+
         if let Some(content) = &self.content {
             result = format!("{} - {}", result, content);
-        }
-
-        if let Some(url) = &self.url {
-            result = format!("{} - {}", result, url);
-        }
-
-        if let Some(discussion_url) = &self.discussion_url {
-            result = format!("{} - {}", result, discussion_url);
         }
 
         if let Some(timestamp) = &self.timestamp {
             result = format!("{} - {}", result, timestamp);
         }
 
-        if let Some(score) = &self.score {
-            result = format!("{} - {}", result, score);
+        if let Some(url) = &self.url {
+            let minimized_url = minimize_url(url);
+            result = format!("{} - {}", result, minimized_url);
+        }
+
+        if let Some(discussion_url) = &self.discussion_url {
+            let minimized_discussion_url = minimize_url(discussion_url);
+            result = format!("{} - {}", result, minimized_discussion_url);
         }
 
         result
@@ -150,3 +152,10 @@ pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, Box<dyn Error>> 
     serde_json::from_value(value).map_err(|e| e.into())
 }
 
+fn minimize_url(full_url: &str) -> String {
+    full_url
+        .split('/')
+        .nth(2)
+        .map(|domain| domain.to_string())
+        .unwrap_or_else(|| full_url.to_string())
+}
