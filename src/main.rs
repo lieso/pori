@@ -16,6 +16,7 @@ mod macros;
 mod prelude;
 mod digest;
 mod types;
+mod mock;
 
 use crate::prelude::*;
 use crate::context::Context;

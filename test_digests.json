@@ -1,0 +1,202 @@
+{
+  "hacker_news": {
+    "digest": {
+      "title": "Hacker News",
+      "entries": [
+        {
+          "title": "Show HN: I built a neural network from scratch in Rust",
+          "content": "After 6 months of learning Rust, I implemented backpropagation, gradient descent, and various activation functions. No ML libraries, just pure Rust and math.",
+          "url": "https://github.com/johndoe/rust-nn-scratch",
+          "discussionUrl": "https://news.ycombinator.com/item?id=12345",
+          "author": {
+            "name": "johndoe",
+            "url": "https://news.ycombinator.com/user?id=johndoe"
+          },
+          "timestamp": "2026-01-24T10:30:00Z",
+          "score": "342",
+          "tags": "rust, machine-learning, neural-networks"
+        },
+        {
+          "title": "The hidden complexity of terminal emulators",
+          "content": "A deep dive into ANSI escape codes, character encodings, and why building a fast terminal is harder than it looks.",
+          "url": "https://blog.terminal.dev/complexity",
+          "discussionUrl": "https://news.ycombinator.com/item?id=12346",
+          "author": {
+            "name": "terminal_dev",
+            "url": "https://news.ycombinator.com/user?id=terminal_dev"
+          },
+          "timestamp": "2026-01-24T09:15:00Z",
+          "score": "287",
+          "tags": "terminals, low-level, performance"
+        },
+        {
+          "title": "Postgres 17 adds support for incremental backup",
+          "content": "New feature allows backing up only changed blocks since last backup, significantly reducing backup times and storage.",
+          "url": "https://www.postgresql.org/docs/17/incremental-backup.html",
+          "discussionUrl": "https://news.ycombinator.com/item?id=12347",
+          "author": {
+            "name": "pgadmin",
+            "url": "https://news.ycombinator.com/user?id=pgadmin"
+          },
+          "timestamp": "2026-01-24T08:45:00Z",
+          "score": "156",
+          "tags": "postgres, databases, backup"
+        },
+        {
+          "title": "Ask HN: What's your favorite debugging technique?",
+          "content": null,
+          "url": null,
+          "discussionUrl": "https://news.ycombinator.com/item?id=12348",
+          "author": {
+            "name": "curious_dev",
+            "url": "https://news.ycombinator.com/user?id=curious_dev"
+          },
+          "timestamp": "2026-01-24T07:20:00Z",
+          "score": "89",
+          "tags": "ask-hn, debugging"
+        },
+        {
+          "title": "Why I switched from Docker to Podman",
+          "content": "Rootless containers, better security model, and Docker compatibility without the daemon.",
+          "url": "https://blog.containers.dev/docker-to-podman",
+          "discussionUrl": "https://news.ycombinator.com/item?id=12349",
+          "author": {
+            "name": "container_fan",
+            "url": "https://news.ycombinator.com/user?id=container_fan"
+          },
+          "timestamp": "2026-01-24T06:55:00Z",
+          "score": "234",
+          "tags": "containers, docker, podman, devops"
+        }
+      ]
+    }
+  },
+  "reddit_programming": {
+    "digest": {
+      "title": "r/programming",
+      "entries": [
+        {
+          "title": "PSA: Don't use floating point for currency calculations",
+          "content": "Learned this the hard way when our accounting system was off by $0.01 on every transaction. Use decimal types or integers (cents).",
+          "url": "https://www.reddit.com/r/programming/comments/abc123",
+          "discussionUrl": "https://www.reddit.com/r/programming/comments/abc123",
+          "author": {
+            "name": "dev_lessons",
+            "url": "https://www.reddit.com/user/dev_lessons"
+          },
+          "timestamp": "2026-01-23T18:30:00Z",
+          "score": "1.2k",
+          "tags": null
+        },
+        {
+          "title": "I created a game engine in C with zero dependencies",
+          "content": "No libraries, no frameworks. Just C99, OpenGL, and a lot of patience. Cross-platform support for Windows, Mac, and Linux.",
+          "url": "https://github.com/username/minimal-engine",
+          "discussionUrl": "https://www.reddit.com/r/programming/comments/abc124",
+          "author": {
+            "name": "engine_builder",
+            "url": "https://www.reddit.com/user/engine_builder"
+          },
+          "timestamp": "2026-01-23T15:45:00Z",
+          "score": "856",
+          "tags": null
+        },
+        {
+          "title": "TIL: Python's GIL doesn't affect multiprocessing, only multithreading",
+          "content": "Spent hours debugging slow performance before realizing I should be using multiprocessing.Pool instead of threading.Thread.",
+          "url": null,
+          "discussionUrl": "https://www.reddit.com/r/programming/comments/abc125",
+          "author": {
+            "name": "python_newbie",
+            "url": "https://www.reddit.com/user/python_newbie"
+          },
+          "timestamp": "2026-01-23T12:20:00Z",
+          "score": "543",
+          "tags": null
+        }
+      ]
+    }
+  },
+  "tech_blog": {
+    "digest": {
+      "title": "Tech Blog Aggregator",
+      "entries": [
+        {
+          "title": "How we reduced our API latency by 90%",
+          "content": "By implementing edge caching, connection pooling, and query optimization, we went from 500ms to 50ms average response time.",
+          "url": "https://engineering.bigcorp.com/reducing-latency",
+          "discussionUrl": null,
+          "author": {
+            "name": "BigCorp Engineering",
+            "url": "https://engineering.bigcorp.com/authors/team"
+          },
+          "timestamp": "2026-01-24T14:00:00Z",
+          "score": null,
+          "tags": "performance, api, optimization"
+        },
+        {
+          "title": "Lessons learned from 1 year of building with WebAssembly",
+          "content": "WebAssembly is amazing for compute-heavy tasks in the browser, but debugging is still painful and binary sizes can balloon quickly.",
+          "url": "https://devblog.wasm-company.io/one-year-wasm",
+          "discussionUrl": null,
+          "author": {
+            "name": "Sarah Chen",
+            "url": "https://devblog.wasm-company.io/authors/sarah"
+          },
+          "timestamp": "2026-01-24T11:30:00Z",
+          "score": null,
+          "tags": "webassembly, javascript, web"
+        },
+        {
+          "title": "Migrating 200TB of data with zero downtime",
+          "content": "Our approach to migrating from MySQL to PostgreSQL while serving 50k requests/second.",
+          "url": "https://tech.startup.com/migration-story",
+          "discussionUrl": null,
+          "author": {
+            "name": "Alex Rodriguez",
+            "url": "https://tech.startup.com/authors/alex"
+          },
+          "timestamp": "2026-01-23T16:00:00Z",
+          "score": null,
+          "tags": "databases, migration, devops"
+        },
+        {
+          "title": "Why we chose Rust for our new microservice",
+          "content": "Memory safety without garbage collection, fearless concurrency, and excellent performance made Rust the clear winner.",
+          "url": "https://blog.cloudplatform.dev/choosing-rust",
+          "discussionUrl": null,
+          "author": {
+            "name": "Cloud Platform Team",
+            "url": "https://blog.cloudplatform.dev/authors/team"
+          },
+          "timestamp": "2026-01-23T09:00:00Z",
+          "score": null,
+          "tags": "rust, microservices, architecture"
+        }
+      ]
+    }
+  },
+  "minimal": {
+    "digest": {
+      "title": "Minimal Example",
+      "entries": [
+        {
+          "title": "Single item with only required fields",
+          "content": null,
+          "url": null,
+          "discussionUrl": null,
+          "author": null,
+          "timestamp": null,
+          "score": null,
+          "tags": null
+        }
+      ]
+    }
+  },
+  "empty": {
+    "digest": {
+      "title": "Empty Digest",
+      "entries": []
+    }
+  }
+}
