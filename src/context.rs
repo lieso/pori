@@ -2,7 +2,8 @@ use headless_chrome::{Browser};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::sync::Arc;
 use parversion::{translation, document_format};
-use parversion::prelude::Options;
+use parversion::prelude::{Options, Metadata};
+use parversion::document::DocumentType;
 
 use crate::prelude::*;
 use crate::digest::{Digest, deserialize_to_digest};
@@ -100,15 +101,20 @@ impl Context {
             ..Options::default()
         };
 
+        let metadata = Metadata {
+            document_type: Some(DocumentType::Html),
+            origin: url.clone(),
+        };
 
-        let result = translation::translate_text_to_document(
+        let result = translation::translate_text_to_package(
             self.provider.clone(),
             document,
-            &Some(options),
+            &options,
+            &metadata,
             Digest::get_json_schema()
         ).await.map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
 
-        let digest = deserialize_to_digest(&result.data)
+        let digest = deserialize_to_digest(&result.document.data)
             .map_err(|e| Errors::TranslationError(format!("Could not deserialize translated content: {}", e)))?;
 
 
