@@ -9,6 +9,7 @@ use crate::prelude::*;
 use crate::digest::{Digest, deserialize_to_digest};
 use crate::mock::MockProvider;
 
+#[derive(Clone)]
 pub struct Context {
     browser: Browser,
     provider: Arc<YamlFileProvider>,

@@ -1,4 +1,3 @@
-use std::sync::{Arc, RwLock};
 use std::io;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
@@ -7,10 +6,10 @@ use ratatui::{
     symbols::border,
     text::{Line, Text, Span},
     style::{
-        palette::tailwind::{RED, BLUE, GREEN, SLATE},
-        Color, Modifier, Style, Stylize,
+        palette::tailwind::{GREEN},
+        Color, Style, Stylize,
     },
-    widgets::{Block, Borders, Paragraph, Widget, List, ListDirection, ListItem, ListState, StatefulWidget},
+    widgets::{Block, Paragraph, Widget, List, ListItem, ListState, StatefulWidget},
     DefaultTerminal, Frame,
     prelude::*
 };
@@ -31,17 +30,19 @@ struct EntryList {
 }
 
 pub struct App {
-    context: Arc<RwLock<Context>>,
+    context: Context,
     digest: Option<Digest>,
     exit: bool,
+    loading: bool,
     entry_list: EntryList,
 }
 
 impl App {
-    pub fn new(context: Arc<RwLock<Context>>) -> Self {
+    pub fn new(context: Context) -> Self {
         Self {
             context,
             exit: false,
+            loading: false,
             digest: None,
             entry_list: EntryList {
                 items: vec![],
@@ -75,24 +76,19 @@ impl App {
     async fn handle_navigation_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => {
-                let mut lock = write_lock!(self.context);
-                lock.append_char('q');
+                self.context.append_char('q');
             },
             KeyCode::Esc => {
-                let mut lock = write_lock!(self.context);
-                lock.set_mode(Mode::Interaction);
+                self.context.set_mode(Mode::Interaction);
             }
             KeyCode::Char('/') => {
-                let mut lock = write_lock!(self.context);
-                lock.append_char('/');
+                self.context.append_char('/');
             }
             KeyCode::Char(c) => {
-                let mut lock = write_lock!(self.context);
-                lock.append_char(c);
+                self.context.append_char(c);
             }
             KeyCode::Backspace => {
-                let mut lock = write_lock!(self.context);
-                lock.remove_last_char();
+                self.context.remove_last_char();
             }
             KeyCode::Enter => {
                 self.navigate().await;
@@ -113,24 +109,17 @@ impl App {
                 self.exit();
             },
             KeyCode::Char('r') => {
-                self.refresh();
+                self.refresh().await;
             },
             KeyCode::Char('/') => {
-                let mut lock = write_lock!(self.context);
-                lock.set_mode(Mode::Navigation);
+                self.context.set_mode(Mode::Navigation);
             }
             _ => {}
         }
     }
 
     async fn handle_key_event(&mut self, key_event: KeyEvent) {
-        let current_mode = {
-            let lock = read_lock!(self.context);
-
-            lock.get_mode().clone()
-        };
-
-        match current_mode {
+        match self.context.get_mode().clone() {
             Mode::Navigation => self.handle_navigation_key_event(key_event).await,
             Mode::Interaction => self.handle_interaction_key_event(key_event).await,
         }
@@ -145,10 +134,20 @@ impl App {
     }
 
     async fn navigate(&mut self) {
-        let mut lock = write_lock!(self.context);
-        let digest = lock.visit().await.expect("Could not visit");
+        self.loading = true;
+
+        let context_clone = self.context.clone();
+
+        let handle = tokio::spawn(async move {
+            let digest: Digest = context_clone.visit().await.expect("Could not visit");
+            digest
+        });
+
+        let digest = handle.await.unwrap();
         self.digest = Some(digest);
-        lock.set_mode(Mode::Interaction);
+        self.context.set_mode(Mode::Interaction);
+
+        self.loading = false;
     }
 
     fn select_previous(&mut self) {
@@ -167,24 +166,17 @@ impl App {
             .title(title.centered())
             .border_set(border::THICK);
 
-        let url = {
-            let lock = read_lock!(self.context);
-            lock.url_to_string()
-        };
+        let url = self.context.url_to_string();
 
-        let search_text = {
-            let lock = read_lock!(self.context);
-            
-            if let Mode::Navigation = lock.get_mode() {
-                Text::from(vec![Line::from(vec![
-                    Span::raw("Navigate: ").white(),
-                    Span::raw(url),
-                ])])
-            } else {
-                Text::from(vec![Line::from(vec![
-                    Span::raw(url),
-                ])])
-            }
+        let search_text = if let Mode::Navigation = self.context.get_mode() {
+            Text::from(vec![Line::from(vec![
+                Span::raw("Navigate: ").white(),
+                Span::raw(url),
+            ])])
+        } else {
+            Text::from(vec![Line::from(vec![
+                Span::raw(url),
+            ])])
         };
 
         Paragraph::new(search_text)
@@ -194,12 +186,16 @@ impl App {
     }
 
     fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
-        if let Some(digest) = &self.digest {
+        if self.loading {
+            let loading_text = Paragraph::new("⏳ Loading...")
+                .block(Block::bordered().title("Status"))
+                .centered();
+            loading_text.render(area, buf);
+        } else if let Some(digest) = &self.digest {
             let items: Vec<ListItem> = digest
                 .entries
                 .iter()
                 .map(|entry| {
-
                     let title = entry
                         .title
                         .clone()

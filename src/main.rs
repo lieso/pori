@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use ratatui;
 use headless_chrome::{Browser, LaunchOptions};
 use clap::{Arg, App as ClapApp};
@@ -107,10 +107,10 @@ async fn run() -> Result<(), Errors> {
 
     let browser = init_browser().await?;
 
-    let mut context = Arc::new(RwLock::new(Context::new(
+    let context = Context::new(
         provider,
         browser
-    )));
+    );
 
     let mut terminal = ratatui::init();
     let mut app = App::new(context);
