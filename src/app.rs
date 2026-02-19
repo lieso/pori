@@ -1,4 +1,5 @@
 use std::io;
+use std::time::Duration;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
@@ -13,6 +14,7 @@ use ratatui::{
     DefaultTerminal, Frame,
     prelude::*
 };
+use tokio::sync::mpsc;
 
 use crate::prelude::*;
 use crate::context::Context;
@@ -35,10 +37,14 @@ pub struct App {
     exit: bool,
     loading: bool,
     entry_list: EntryList,
+    digest_tx: mpsc::UnboundedSender<Digest>,
+    digest_rx: mpsc::UnboundedReceiver<Digest>,
 }
 
 impl App {
     pub fn new(context: Context) -> Self {
+        let (tx, rx) = mpsc::unbounded_channel();
+
         Self {
             context,
             exit: false,
@@ -47,7 +53,9 @@ impl App {
             entry_list: EntryList {
                 items: vec![],
                 state: ListState::default(),
-            }
+            },
+            digest_tx: tx,
+            digest_rx: rx,
         }
     }
 
@@ -55,6 +63,12 @@ impl App {
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events().await?;
+
+            if let Ok(digest) = self.digest_rx.try_recv() {
+                self.digest = Some(digest);
+                self.loading = false;
+                self.context.set_mode(Mode::Interaction);
+            }
         }
         Ok(())
     }
@@ -64,12 +78,14 @@ impl App {
     }
 
     async fn handle_events(&mut self) -> io::Result<()> {
-        match event::read()? {
-            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                self.handle_key_event(key_event).await
-            }
-            _ => {}
-        };
+        if event::poll(Duration::from_millis(50))? {
+            match event::read()? {
+                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+                    self.handle_key_event(key_event).await
+                }
+                _ => {}
+            };
+        }
         Ok(())
     }
 
@@ -137,17 +153,13 @@ impl App {
         self.loading = true;
 
         let context_clone = self.context.clone();
+        let tx_clone = self.digest_tx.clone();
 
-        let handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             let digest: Digest = context_clone.visit().await.expect("Could not visit");
-            digest
+
+            tx_clone.send(digest).unwrap();
         });
-
-        let digest = handle.await.unwrap();
-        self.digest = Some(digest);
-        self.context.set_mode(Mode::Interaction);
-
-        self.loading = false;
     }
 
     fn select_previous(&mut self) {
