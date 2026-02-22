@@ -7,7 +7,7 @@ use ratatui::{
     symbols::border,
     text::{Line, Text, Span},
     style::{
-        palette::tailwind::{GREEN},
+        palette::tailwind::{GREEN, BLUE},
         Color, Style, Stylize,
     },
     widgets::{Block, Paragraph, Widget, List, ListItem, ListState, StatefulWidget},
@@ -18,7 +18,7 @@ use tokio::sync::mpsc;
 
 use crate::prelude::*;
 use crate::context::Context;
-use crate::digest::Digest;
+use crate::digest::{Digest, minimize_url};
 
 const ENTRY_DETAILS_FG_COLOR: Color = GREEN.c500;
 
@@ -207,7 +207,8 @@ impl App {
             let items: Vec<ListItem> = digest
                 .entries
                 .iter()
-                .map(|entry| {
+                .enumerate()
+                .map(|(index, entry)| {
                     let title = entry
                         .title
                         .clone()
@@ -218,10 +219,49 @@ impl App {
                         Style::default().bold()
                     );
 
-                    let details_line = Line::styled(
-                        entry.to_details_string(),
-                        Style::default().fg(ENTRY_DETAILS_FG_COLOR)
-                    );
+                    let mut spans = Vec::new();
+
+                    if let Some(url) = &entry.url {
+                        let minimized_url = minimize_url(&url);
+                        spans.push(
+                            Span::styled(format!("{}", minimized_url), Style::default().fg(BLUE.c500))
+                        );
+                    }
+
+                    if let Some(score) = &entry.score {
+                        spans.push(
+                            Span::styled(format!(" {}", score), Style::default().fg(GREEN.c500))
+                        );
+                    }
+
+                    if let Some(content) = &entry.content {
+                        spans.push(
+                            Span::styled(format!(" {}", content), Style::default().fg(GREEN.c500))
+                        );
+                    }
+
+                    if let Some(discussion_url) = &entry.discussion_url {
+                        spans.push(
+                            Span::styled(format!(" {}", discussion_url), Style::default().fg(BLUE.c500))
+                        );
+                    }
+
+                    if let Some(timestamp) = &entry.timestamp {
+                        spans.push(
+                            Span::styled(format!(" {}", timestamp), Style::default().fg(GREEN.c500))
+                        );
+                    }
+
+                    if let Some(author) = &entry.author {
+                        if let Some(author_name) = &author.name {
+                            spans.push(
+                                Span::styled(format!(" {}", author_name), Style::default().fg(GREEN.c500))
+                            );
+                        }
+                    }
+
+                    
+                    let details_line = Line::from(spans.clone());
 
                     let text = Text::from(vec![title_line, details_line]);
 
