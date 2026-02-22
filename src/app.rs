@@ -18,9 +18,7 @@ use tokio::sync::mpsc;
 
 use crate::prelude::*;
 use crate::context::Context;
-use crate::digest::{Digest, minimize_url};
-
-const ENTRY_DETAILS_FG_COLOR: Color = GREEN.c500;
+use crate::digest::Digest;
 
 struct EntryListItem {
     title: String,
