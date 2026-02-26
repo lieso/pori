@@ -16,7 +16,6 @@ mod macros;
 mod prelude;
 mod digest;
 mod types;
-mod mock;
 mod utilities;
 
 use crate::prelude::*;

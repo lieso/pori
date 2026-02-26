@@ -7,7 +7,6 @@ use parversion::document::DocumentType;
 
 use crate::prelude::*;
 use crate::digest::{Digest, deserialize_to_digest};
-use crate::mock::MockProvider;
 
 #[derive(Clone)]
 pub struct Context {
@@ -72,10 +71,6 @@ impl Context {
     }
 
     pub async fn visit(&self) -> Result<Digest, Errors> {
-        if std::env::var("USE_MOCK_DATA").is_ok() {
-            return self.visit_mock().await;
-        }
-
         let url = self.get_url().ok_or_else(|| {
             Errors::UnexpectedError("URL not found".into())
         })?;
@@ -120,16 +115,5 @@ impl Context {
 
 
         Ok(digest)
-    }
-
-    async fn visit_mock(&self) -> Result<Digest, Errors> {
-        let url = self.get_url().ok_or_else(|| {
-            Errors::UnexpectedError("URL not found".into())
-        })?;
-
-        log::info!("Using mock data for URL: {}", url);
-
-        let mock_provider = MockProvider::new()?;
-        mock_provider.get_digest_for_url(&url)
     }
 }
