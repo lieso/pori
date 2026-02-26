@@ -37,7 +37,7 @@ pub struct App {
     entry_list: EntryList,
     digest_tx: mpsc::UnboundedSender<Digest>,
     digest_rx: mpsc::UnboundedReceiver<Digest>,
-    column_size: Option<usize>,
+    column_count: Option<usize>,
     selected_column_index: usize,
 }
 
@@ -55,7 +55,7 @@ impl App {
             },
             digest_tx: tx,
             digest_rx: rx,
-            column_size: None,
+            column_count: None,
             selected_column_index: 0,
         }
     }
@@ -66,7 +66,7 @@ impl App {
             self.handle_events().await?;
 
             if let Ok(digest) = self.digest_rx.try_recv() {
-                let column_size = digest
+                let column_count = digest
                     .entries
                     .iter()
                     .fold(0, |acc, entry| {
@@ -90,9 +90,9 @@ impl App {
                         }
                     });
 
-                log::info!("Using column size: {}", column_size);
+                log::info!("Using column size: {}", column_count);
 
-                self.column_size = Some(column_size);
+                self.column_count = Some(column_count);
                 self.digest = Some(digest);
                 self.loading = false;
                 self.context.set_mode(Mode::Interaction);
