@@ -17,6 +17,7 @@ mod prelude;
 mod digest;
 mod types;
 mod utilities;
+mod ui;
 
 use crate::prelude::*;
 use crate::context::Context;

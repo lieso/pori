@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use crate::prelude::*;
 use crate::context::Context;
 use crate::digest::Digest;
+use crate::ui::UI;
 
 struct EntryListItem {
     title: String,
@@ -32,6 +33,7 @@ struct EntryList {
 
 pub struct App {
     context: Context,
+    ui: UI,
     digest: Option<Digest>,
     exit: bool,
     loading: bool,
@@ -49,6 +51,7 @@ impl App {
 
         Self {
             context,
+            ui: UI::new(),
             exit: false,
             loading: false, digest: None,
             entry_list: EntryList {
