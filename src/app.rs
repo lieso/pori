@@ -38,6 +38,7 @@ pub struct App {
     entry_list: EntryList,
     digest_tx: mpsc::UnboundedSender<Digest>,
     digest_rx: mpsc::UnboundedReceiver<Digest>,
+    column_ratios: Option<HashMap<String, u32>>,
     column_count: Option<usize>,
     selected_column_index: usize,
 }
@@ -56,6 +57,7 @@ impl App {
             },
             digest_tx: tx,
             digest_rx: rx,
+            column_ratios: None,
             column_count: None,
             selected_column_index: 0,
         }
@@ -91,20 +93,20 @@ impl App {
                         }
                     });
 
-                let total_lengths: HashMap<&str, usize> = digest
+                let total_lengths: HashMap<String, usize> = digest
                     .entries
                     .iter()
-                    .fold(HashMap::new(), |mut acc: HashMap<&str, usize>, entry| {
+                    .fold(HashMap::new(), |mut acc, entry| {
                         if let Some(content) = &entry.content {
-                            *acc.entry("content").or_insert(0) += content.len();
+                            *acc.entry("content".to_string()).or_insert(0) += content.len();
                         }
 
                         if let Some(url) = &entry.url {
-                            *acc.entry("url").or_insert(0) += url.len();
+                            *acc.entry("url".to_string()).or_insert(0) += url.len();
                         }
 
                         if let Some(discussion_url) = &entry.discussion_url {
-                            *acc.entry("discussion_url").or_insert(0) += discussion_url.len();
+                            *acc.entry("discussion_url".to_string()).or_insert(0) += discussion_url.len();
                         }
 
                         if let Some(author) = &entry.author {
@@ -116,21 +118,21 @@ impl App {
                                 total += url.len();
                             }
 
-                            *acc.entry("author").or_insert(0) += total;
+                            *acc.entry("author".to_string()).or_insert(0) += total;
                         }
 
                         if let Some(timestamp) = &entry.timestamp {
-                            *acc.entry("timestamp").or_insert(0) += timestamp.len();
+                            *acc.entry("timestamp".to_string()).or_insert(0) += timestamp.len();
                         }
 
                         if let Some(score) = &entry.score {
-                            *acc.entry("score").or_insert(0) += score.len();
+                            *acc.entry("score".to_string()).or_insert(0) += score.len();
                         }
 
                         acc
                     });
 
-                let average_lengths: HashMap<&str, f64> = total_lengths
+                let average_lengths: HashMap<String, f64> = total_lengths
                     .into_iter()
                     .map(|(field_name, total_len)| {
                         (field_name, total_len as f64 / digest.entries.len() as f64)
@@ -141,7 +143,7 @@ impl App {
                     .values()
                     .fold(f64::INFINITY, |a, &b| a.min(b));
 
-                let column_ratios: HashMap<&str, u32> = average_lengths
+                let column_ratios: HashMap<String, u32> = average_lengths
                     .into_iter()
                     .map(|(k, val)| {
                         let normalized = if min_average > 0.0 {
