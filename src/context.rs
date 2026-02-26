@@ -70,7 +70,7 @@ impl Context {
         self.mode = mode;
     }
 
-    pub async fn visit(&self) -> Result<Digest, Errors> {
+    pub async fn visit(&self, json_schema: &str) -> Result<Digest, Errors> {
         let url = self.get_url().ok_or_else(|| {
             Errors::UnexpectedError("URL not found".into())
         })?;
@@ -107,7 +107,7 @@ impl Context {
             document,
             &options,
             &metadata,
-            Digest::get_json_schema()
+            json_schema,
         ).await.map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
 
         let digest = deserialize_to_digest(&result.document.data)

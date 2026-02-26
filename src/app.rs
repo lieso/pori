@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use crate::prelude::*;
 use crate::context::Context;
 use crate::digest::Digest;
-use crate::ui::UI;
+use crate::ui::{UI, ContentType};
 
 struct EntryListItem {
     title: String,
@@ -256,11 +256,17 @@ impl App {
     async fn navigate(&mut self) {
         self.loading = true;
 
+        // ******************************************
+        let content_type = ContentType::Digest;
+        self.ui.set_content_type(content_type);
+        // ******************************************
+
         let context_clone = self.context.clone();
         let tx_clone = self.digest_tx.clone();
+        let schema_clone = self.ui.get_json_schema().to_string();
 
         tokio::spawn(async move {
-            let digest: Digest = context_clone.visit().await.expect("Could not visit");
+            let digest: Digest = context_clone.visit(&schema_clone).await.expect("Could not visit");
 
             tx_clone.send(digest).unwrap();
         });
