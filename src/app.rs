@@ -7,7 +7,7 @@ use ratatui::{
     symbols::border,
     text::{Line, Text, Span},
     style::{
-        palette::tailwind::{GREEN, BLUE},
+        palette::tailwind::{GREEN, BLUE, GRAY},
         Color, Style, Stylize,
     },
     widgets::{Block, Paragraph, Widget, List, ListItem, ListState, StatefulWidget},
@@ -37,6 +37,8 @@ pub struct App {
     entry_list: EntryList,
     digest_tx: mpsc::UnboundedSender<Digest>,
     digest_rx: mpsc::UnboundedReceiver<Digest>,
+    column_size: Option<usize>,
+    selected_column_index: usize,
 }
 
 impl App {
@@ -46,14 +48,15 @@ impl App {
         Self {
             context,
             exit: false,
-            loading: false,
-            digest: None,
+            loading: false, digest: None,
             entry_list: EntryList {
                 items: vec![],
                 state: ListState::default(),
             },
             digest_tx: tx,
             digest_rx: rx,
+            column_size: None,
+            selected_column_index: 0,
         }
     }
 
@@ -63,6 +66,33 @@ impl App {
             self.handle_events().await?;
 
             if let Ok(digest) = self.digest_rx.try_recv() {
+                let column_size = digest
+                    .entries
+                    .iter()
+                    .fold(0, |acc, entry| {
+                        let field_presence: Vec<bool> = vec![
+                            entry.content.is_some(),
+                            entry.url.is_some(),
+                            entry.discussion_url.is_some(),
+                            entry.author.is_some(),
+                            entry.timestamp.is_some(),
+                            entry.score.is_some(),
+                        ];
+
+                        let count = field_presence.iter().fold(0, |acc, &present| {
+                            if present { acc + 1 } else { acc }
+                        });
+
+                        if count > acc {
+                            count
+                        } else {
+                            acc
+                        }
+                    });
+
+                log::info!("Using column size: {}", column_size);
+
+                self.column_size = Some(column_size);
                 self.digest = Some(digest);
                 self.loading = false;
                 self.context.set_mode(Mode::Interaction);
@@ -113,11 +143,17 @@ impl App {
 
     async fn handle_interaction_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
+            KeyCode::Char('h') => {
+                self.select_previous_column();
+            },
             KeyCode::Char('j') => {
                 self.select_next();
             },
             KeyCode::Char('k') => {
                 self.select_previous();
+            },
+            KeyCode::Char('l') => {
+                self.select_next_column();
             },
             KeyCode::Char('q') => {
                 self.exit();
@@ -167,6 +203,14 @@ impl App {
     fn select_next(&mut self) {
         self.entry_list.state.select_next();
     }
+
+    fn select_previous_column(&mut self) {
+        self.selected_column_index = self.selected_column_index - 1;
+    }
+
+    fn select_next_column(&mut self) {
+        self.selected_column_index = self.selected_column_index + 1;
+    }
 }
 
 impl App {
@@ -207,6 +251,8 @@ impl App {
                 .iter()
                 .enumerate()
                 .map(|(index, entry)| {
+                    let is_row_selected = self.entry_list.state.selected() == Some(index);
+
                     let title = entry
                         .title
                         .clone()
@@ -214,15 +260,27 @@ impl App {
 
                     let title_line = Line::styled(
                         title,
-                        Style::default().bold()
+                        Style::default().fg(GRAY.c300).bold()
                     );
 
                     let mut spans = Vec::new();
 
                     if let Some(url) = &entry.url {
                         let minimized_url = minimize_url(&url);
+                        let style = {
+                            if is_row_selected {
+                                if spans.len() == self.selected_column_index {
+                                    Style::default().bold().fg(BLUE.c500)
+                                } else {
+                                    Style::default().fg(BLUE.c500)
+                                }
+                            } else {
+                                Style::default().fg(BLUE.c500)
+                            }
+                        };
+
                         spans.push(
-                            Span::styled(format!("{}", minimized_url), Style::default().fg(BLUE.c500))
+                            Span::styled(format!("{}", minimized_url), style)
                         );
                     }
 
@@ -257,11 +315,10 @@ impl App {
                             );
                         }
                     }
-
                     
                     let details_line = Line::from(spans.clone());
 
-                    let text = Text::from(vec![title_line, details_line]);
+                    let text = Text::from(vec![title_line, details_line, Line::from("")]);
 
                     ListItem::new(text)
                 })
