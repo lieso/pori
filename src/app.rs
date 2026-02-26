@@ -15,6 +15,7 @@ use ratatui::{
     prelude::*
 };
 use tokio::sync::mpsc;
+use std::collections::HashMap;
 
 use crate::prelude::*;
 use crate::context::Context;
@@ -90,8 +91,72 @@ impl App {
                         }
                     });
 
-                log::info!("Using column size: {}", column_count);
+                let total_lengths: HashMap<&str, usize> = digest
+                    .entries
+                    .iter()
+                    .fold(HashMap::new(), |mut acc: HashMap<&str, usize>, entry| {
+                        if let Some(content) = &entry.content {
+                            *acc.entry("content").or_insert(0) += content.len();
+                        }
 
+                        if let Some(url) = &entry.url {
+                            *acc.entry("url").or_insert(0) += url.len();
+                        }
+
+                        if let Some(discussion_url) = &entry.discussion_url {
+                            *acc.entry("discussion_url").or_insert(0) += discussion_url.len();
+                        }
+
+                        if let Some(author) = &entry.author {
+                            let mut total = 0;
+                            if let Some(name) = &author.name {
+                                total += name.len();
+                            }
+                            if let Some(url) = &author.url {
+                                total += url.len();
+                            }
+
+                            *acc.entry("author").or_insert(0) += total;
+                        }
+
+                        if let Some(timestamp) = &entry.timestamp {
+                            *acc.entry("timestamp").or_insert(0) += timestamp.len();
+                        }
+
+                        if let Some(score) = &entry.score {
+                            *acc.entry("score").or_insert(0) += score.len();
+                        }
+
+                        acc
+                    });
+
+                let average_lengths: HashMap<&str, f64> = total_lengths
+                    .into_iter()
+                    .map(|(field_name, total_len)| {
+                        (field_name, total_len as f64 / digest.entries.len() as f64)
+                    })
+                    .collect();
+
+                let min_average = average_lengths
+                    .values()
+                    .fold(f64::INFINITY, |a, &b| a.min(b));
+
+                let column_ratios: HashMap<&str, u32> = average_lengths
+                    .into_iter()
+                    .map(|(k, val)| {
+                        let normalized = if min_average > 0.0 {
+                            (val / min_average).round()
+                        } else {
+                            0.0
+                        };
+                        (k, normalized as u32)
+                    })
+                    .collect();
+
+                log::info!("Using column ratios: {:?}", column_ratios);
+                log::info!("Using column count: {}", column_count);
+
+                self.column_ratios = Some(column_ratios);
                 self.column_count = Some(column_count);
                 self.digest = Some(digest);
                 self.loading = false;
