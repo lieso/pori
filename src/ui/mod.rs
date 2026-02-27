@@ -1,3 +1,8 @@
+use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
+};
+
 mod digest;
 
 use crate::content::digest::Digest;
@@ -40,13 +45,24 @@ impl UI {
         match content_payload {
             ContentPayload::Digest(digest) => {
                 if let Some(app) = &mut self.digest {
-                    app.on_digest(digest);
+                    app.run(digest);
                 } else {
                     self.set_content_type(ContentType::Digest);
                     let app = &mut self.digest.as_mut().unwrap();
-                    app.on_digest(digest);
+                    app.run(digest);
                 }
             },
+        }
+    }
+
+    pub fn render(&mut self, area: Rect, buf: &mut Buffer) {
+        match self.content_type {
+            Some(ContentType::Digest) => {
+                if let Some(app) = &mut self.digest {
+                    app.render(area, buf);
+                }
+            },
+            None => {}
         }
     }
 }
