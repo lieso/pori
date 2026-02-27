@@ -1,6 +1,7 @@
 mod digest;
 
-use digest::Digest;
+use crate::content::digest::Digest;
+use digest::DigestApp;
 
 pub enum ContentType {
     Digest,
@@ -8,7 +9,7 @@ pub enum ContentType {
 
 pub struct UI {
     content_type: Option<ContentType>,
-    digest: Option<Digest>,
+    digest: Option<DigestApp>,
 }
 
 impl UI {
@@ -23,7 +24,7 @@ impl UI {
         match content_type {
             ContentType::Digest => {
                 self.content_type = Some(ContentType::Digest);
-                self.digest = Some(Digest::new());
+                self.digest = Some(DigestApp::new());
             },
         }
     }

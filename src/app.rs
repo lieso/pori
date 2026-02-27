@@ -19,7 +19,7 @@ use std::collections::HashMap;
 
 use crate::prelude::*;
 use crate::context::Context;
-use crate::digest::Digest;
+use crate::content::digest::Digest;
 use crate::ui::{UI, ContentType};
 
 struct EntryListItem {
@@ -38,8 +38,8 @@ pub struct App {
     exit: bool,
     loading: bool,
     entry_list: EntryList,
-    digest_tx: mpsc::UnboundedSender<Digest>,
-    digest_rx: mpsc::UnboundedReceiver<Digest>,
+    tx: mpsc::UnboundedSender<Digest>,
+    rx: mpsc::UnboundedReceiver<Digest>,
     column_ratios: Option<HashMap<String, u32>>,
     column_count: Option<usize>,
     selected_column_index: usize,
@@ -58,8 +58,8 @@ impl App {
                 items: vec![],
                 state: ListState::default(),
             },
-            digest_tx: tx,
-            digest_rx: rx,
+            tx: tx,
+            rx: rx,
             column_ratios: None,
             column_count: None,
             selected_column_index: 0,
@@ -71,7 +71,7 @@ impl App {
             terminal.draw(|frame| self.draw(frame))?;
             self.handle_events().await?;
 
-            if let Ok(digest) = self.digest_rx.try_recv() {
+            if let Ok(digest) = self.rx.try_recv() {
                 let column_count = digest
                     .entries
                     .iter()
@@ -256,13 +256,13 @@ impl App {
     async fn navigate(&mut self) {
         self.loading = true;
 
-        // ******************************************
+        // TODO: infer content type ******************************************
         let content_type = ContentType::Digest;
         self.ui.set_content_type(content_type);
         // ******************************************
 
         let context_clone = self.context.clone();
-        let tx_clone = self.digest_tx.clone();
+        let tx_clone = self.tx.clone();
         let schema_clone = self.ui.get_json_schema().to_string();
 
         tokio::spawn(async move {

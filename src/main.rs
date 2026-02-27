@@ -14,10 +14,10 @@ mod app;
 mod context;
 mod macros;
 mod prelude;
-mod digest;
 mod types;
 mod utilities;
 mod ui;
+mod content;
 
 use crate::prelude::*;
 use crate::context::Context;

@@ -87,6 +87,13 @@ pub struct Digest {
 }
 
 impl Digest {
+    pub fn new() -> Self {
+        Digest {
+            title: None,
+            entries: Vec::new()
+        }
+    }
+
     pub fn get_json_schema() -> &'static str {
         JSON_SCHEMA
     }
@@ -120,12 +127,4 @@ pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, Box<dyn Error>> 
     }
 
     serde_json::from_value(value).map_err(|e| e.into())
-}
-
-pub fn minimize_url(full_url: &str) -> String {
-    full_url
-        .split('/')
-        .nth(2)
-        .map(|domain| domain.to_string())
-        .unwrap_or_else(|| full_url.to_string())
 }

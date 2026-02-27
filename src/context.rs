@@ -6,7 +6,7 @@ use parversion::prelude::{Options, Metadata};
 use parversion::document::DocumentType;
 
 use crate::prelude::*;
-use crate::digest::{Digest, deserialize_to_digest};
+use crate::content::digest::{Digest, deserialize_to_digest};
 
 #[derive(Clone)]
 pub struct Context {
