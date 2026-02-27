@@ -1,6 +1,7 @@
 mod digest;
 
 use crate::content::digest::Digest;
+use crate::content::ContentPayload;
 use digest::DigestApp;
 
 pub enum ContentType {
@@ -32,6 +33,20 @@ impl UI {
     pub fn get_json_schema(&self) -> &str {
         match &self.content_type.as_ref().unwrap() {
             ContentType::Digest => Digest::get_json_schema(),
+        }
+    }
+
+    pub fn run(&mut self, content_payload: ContentPayload) {
+        match content_payload {
+            ContentPayload::Digest(digest) => {
+                if let Some(app) = &mut self.digest {
+                    app.on_digest(digest);
+                } else {
+                    self.set_content_type(ContentType::Digest);
+                    let app = &mut self.digest.as_mut().unwrap();
+                    app.on_digest(digest);
+                }
+            },
         }
     }
 }
