@@ -185,13 +185,18 @@ impl App {
 
     fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
         if self.loading {
-            let loading_text = Paragraph::new("⏳ Loading...")
-                .block(Block::bordered().title("Status"))
-                .centered();
+            let loading_text = Paragraph::new("Loading...");
             loading_text.render(area, buf);
         } else {
             self.ui.render(area, buf);
         }
+    }
+
+    fn render_status_bar(&mut self, area: Rect, buf: &mut Buffer) {
+        let mode = self.context.get_mode().as_str();
+        Paragraph::new(mode)
+            .style(Style::default())
+            .render(area, buf);
     }
 }
 
@@ -201,11 +206,13 @@ impl Widget for &mut App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(3),
-                Constraint::Min(0)
+                Constraint::Min(0),
+                Constraint::Length(1),
             ])
             .split(area);
 
         self.render_header(layout[0], buf);
         self.render_body(layout[1], buf);
+        self.render_status_bar(layout[2], buf);
     }
 }

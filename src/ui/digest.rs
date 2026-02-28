@@ -215,7 +215,6 @@ impl DigestApp {
             .collect();
 
             let list = List::new(items)
-                .block(Block::bordered().title("Entries"))
                 .highlight_style(Style::new().italic())
                 .highlight_symbol(">>")
                 .repeat_highlight_symbol(true);

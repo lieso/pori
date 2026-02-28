@@ -12,3 +12,13 @@ pub enum Mode {
     Navigation,
     NavigationInput,
 }
+
+impl Mode {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Mode::Navigation => "navigation",
+            Mode::NavigationInput => "input",
+            Mode::Interaction => "interaction",
+        }
+    }
+}
