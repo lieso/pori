@@ -1,28 +1,20 @@
 use std::collections::HashMap;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    symbols::border,
     text::{Line, Text, Span},
     style::{
         palette::tailwind::{GREEN, BLUE, GRAY},
-        Color, Style, Stylize,
+        Style,
     },
-    widgets::{Block, Paragraph, Widget, List, ListItem, ListState, StatefulWidget},
-    DefaultTerminal, Frame,
-    prelude::*
+    widgets::{Block, List, ListItem, ListState, StatefulWidget},
 };
 
 use crate::prelude::*;
 use crate::content::digest::Digest;
 
-struct EntryListItem {
-    title: String,
-}
-
 struct EntryList {
-    items: Vec<EntryListItem>,
     state: ListState,
 }
 
@@ -39,7 +31,6 @@ impl DigestApp {
         Self {
             digest: None,
             entry_list: EntryList {
-                items: vec![],
                 state: ListState::default()
             },
             column_ratios: HashMap::new(),

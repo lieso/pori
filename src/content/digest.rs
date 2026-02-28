@@ -1,9 +1,6 @@
 use serde::Deserialize;
 use serde_json::{self, Value};
-use std::collections::HashMap;
 use std::error::Error;
-
-use crate::prelude::*;
 
 pub const JSON_SCHEMA: &str = r#"
 {

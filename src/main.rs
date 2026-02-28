@@ -2,7 +2,6 @@ use std::sync::Arc;
 use ratatui;
 use headless_chrome::{Browser, LaunchOptions};
 use clap::{Arg, App as ClapApp};
-use parversion::provider::{Provider};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::fs;
 use std::path::PathBuf;

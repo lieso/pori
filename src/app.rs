@@ -6,16 +6,12 @@ use ratatui::{
     layout::Rect,
     symbols::border,
     text::{Line, Text, Span},
-    style::{
-        palette::tailwind::{GREEN, BLUE, GRAY},
-        Color, Style, Stylize,
-    },
-    widgets::{Block, Paragraph, Widget, List, ListItem, ListState, StatefulWidget},
+    style::Stylize,
+    widgets::{Block, Paragraph, Widget},
     DefaultTerminal, Frame,
     prelude::*
 };
 use tokio::sync::mpsc;
-use std::collections::HashMap;
 
 use crate::prelude::*;
 use crate::context::Context;

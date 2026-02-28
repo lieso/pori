@@ -1,7 +1,7 @@
 use headless_chrome::{Browser};
 use parversion::provider::yaml::{YamlFileProvider};
 use std::sync::Arc;
-use parversion::{translation, document_format};
+use parversion::translation;
 use parversion::prelude::{Options, Metadata};
 use parversion::document::DocumentType;
 
