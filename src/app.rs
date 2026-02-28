@@ -170,7 +170,7 @@ impl App {
 
         let url = self.context.url_to_string();
 
-        let search_text = if let Mode::Navigation = self.context.get_mode() {
+        let search_text = if let Mode::NavigationInput = self.context.get_mode() {
             Text::from(vec![Line::from(vec![
                 Span::raw("Navigate: ").white(),
                 Span::raw(url),
