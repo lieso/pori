@@ -232,4 +232,38 @@ impl DigestApp {
             StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
         }
     }
+
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        match key_event.code {
+            KeyCode::Char('h') => {
+                self.select_previous_column();
+            },
+            KeyCode::Char('j') => {
+                self.select_next();
+            },
+            KeyCode::Char('k') => {
+                self.select_previous();
+            },
+            KeyCode::Char('l') => {
+                self.select_next_column();
+            },
+            _ => {}
+        }
+    }
+
+    fn select_previous(&mut self) {
+        self.entry_list.state.select_previous();
+    }
+
+    fn select_next(&mut self) {
+        self.entry_list.state.select_next();
+    }
+
+    fn select_previous_column(&mut self) {
+        self.selected_column_index = self.selected_column_index - 1;
+    }
+
+    fn select_next_column(&mut self) {
+        self.selected_column_index = self.selected_column_index + 1;
+    }
 }

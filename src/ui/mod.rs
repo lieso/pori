@@ -2,6 +2,7 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
 };
+use crossterm::event::{KeyEvent};
 
 mod digest;
 
@@ -60,6 +61,17 @@ impl UI {
             Some(ContentType::Digest) => {
                 if let Some(app) = &mut self.digest {
                     app.render(area, buf);
+                }
+            },
+            None => {}
+        }
+    }
+
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        match self.content_type {
+            Some(ContentType::Digest) => {
+                if let Some(app) = &mut self.digest {
+                    app.handle_key_event(key_event);
                 }
             },
             None => {}

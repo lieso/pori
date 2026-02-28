@@ -10,4 +10,5 @@ pub enum Errors {
 pub enum Mode {
     Interaction,
     Navigation,
+    NavigationInput,
 }

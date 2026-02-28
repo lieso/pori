@@ -22,7 +22,7 @@ impl Context {
             browser,
             provider,
             url: None,
-            mode: Mode::Navigation
+            mode: Mode::NavigationInput
         }
     }
 

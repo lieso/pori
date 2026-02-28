@@ -23,27 +23,13 @@ use crate::content::digest::Digest;
 use crate::ui::{UI, ContentType};
 use crate::content::ContentPayload;
 
-struct EntryListItem {
-    title: String,
-}
-
-struct EntryList {
-    items: Vec<EntryListItem>,
-    state: ListState,
-}
-
 pub struct App {
     context: Context,
     ui: UI,
-    digest: Option<Digest>,
     exit: bool,
     loading: bool,
-    entry_list: EntryList,
     tx: mpsc::UnboundedSender<ContentPayload>,
     rx: mpsc::UnboundedReceiver<ContentPayload>,
-    column_ratios: Option<HashMap<String, u32>>,
-    column_count: Option<usize>,
-    selected_column_index: usize,
 }
 
 impl App {
@@ -54,16 +40,9 @@ impl App {
             context,
             ui: UI::new(),
             exit: false,
-            loading: false, digest: None,
-            entry_list: EntryList {
-                items: vec![],
-                state: ListState::default(),
-            },
+            loading: false,
             tx: tx,
             rx: rx,
-            column_ratios: None,
-            column_count: None,
-            selected_column_index: 0,
         }
     }
 
@@ -97,17 +76,23 @@ impl App {
         Ok(())
     }
 
-    async fn handle_navigation_key_event(&mut self, key_event: KeyEvent) {
+    fn handle_navigation_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => {
-                self.context.append_char('q');
+                self.exit();
             },
-            KeyCode::Esc => {
-                self.context.set_mode(Mode::Interaction);
-            }
-            KeyCode::Char('/') => {
-                self.context.append_char('/');
-            }
+            KeyCode::Char('r') => {
+                self.refresh();
+            },
+            KeyCode::Enter => {
+                self.navigate();
+            },
+            _ => {}
+        }
+    }
+
+    fn handle_navigation_input_key_event(&mut self, key_event: KeyEvent) {
+        match key_event.code {
             KeyCode::Char(c) => {
                 self.context.append_char(c);
             }
@@ -115,43 +100,31 @@ impl App {
                 self.context.remove_last_char();
             }
             KeyCode::Enter => {
-                self.navigate().await;
+                self.navigate();
             },
             _ => {}
         }
     }
 
-    async fn handle_interaction_key_event(&mut self, key_event: KeyEvent) {
+    fn handle_universal_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Char('h') => {
-                self.select_previous_column();
-            },
-            KeyCode::Char('j') => {
-                self.select_next();
-            },
-            KeyCode::Char('k') => {
-                self.select_previous();
-            },
-            KeyCode::Char('l') => {
-                self.select_next_column();
-            },
-            KeyCode::Char('q') => {
-                self.exit();
-            },
-            KeyCode::Char('r') => {
-                self.refresh().await;
-            },
-            KeyCode::Char('/') => {
+            KeyCode::Esc => {
                 self.context.set_mode(Mode::Navigation);
+            }
+            KeyCode::Char('/') => {
+                self.context.set_mode(Mode::NavigationInput);
             }
             _ => {}
         }
     }
 
     async fn handle_key_event(&mut self, key_event: KeyEvent) {
+        self.handle_universal_key_event(key_event);
+
         match self.context.get_mode().clone() {
-            Mode::Navigation => self.handle_navigation_key_event(key_event).await,
-            Mode::Interaction => self.handle_interaction_key_event(key_event).await,
+            Mode::Navigation => self.handle_navigation_key_event(key_event),
+            Mode::Interaction => self.ui.handle_key_event(key_event),
+            Mode::NavigationInput => self.handle_navigation_input_key_event(key_event),
         }
     }
 
@@ -159,11 +132,11 @@ impl App {
         self.exit = true;
     }
 
-    async fn refresh(&mut self) {
-        self.navigate().await;
+    fn refresh(&mut self) {
+        self.navigate();
     }
 
-    async fn navigate(&mut self) {
+    fn navigate(&mut self) {
         self.loading = true;
 
         // TODO: infer content type ******************************************
@@ -185,22 +158,6 @@ impl App {
 
             tx_clone.send(content_payload).unwrap();
         });
-    }
-
-    fn select_previous(&mut self) {
-        self.entry_list.state.select_previous();
-    }
-
-    fn select_next(&mut self) {
-        self.entry_list.state.select_next();
-    }
-
-    fn select_previous_column(&mut self) {
-        self.selected_column_index = self.selected_column_index - 1;
-    }
-
-    fn select_next_column(&mut self) {
-        self.selected_column_index = self.selected_column_index + 1;
     }
 }
 
