@@ -6,6 +6,7 @@ use crossterm::event::{KeyEvent};
 
 mod digest;
 
+use crate::prelude::*;
 use crate::content::digest::Digest;
 use crate::content::ContentPayload;
 use digest::DigestApp;
@@ -67,14 +68,16 @@ impl UI {
         }
     }
 
-    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match self.content_type {
             Some(ContentType::Digest) => {
                 if let Some(app) = &mut self.digest {
-                    app.handle_key_event(key_event);
+                    return app.handle_key_event(key_event);
                 }
             },
             None => {}
         }
+
+        None
     }
 }

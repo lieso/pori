@@ -227,7 +227,7 @@ impl DigestApp {
         StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
     }
 
-    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match key_event.code {
             KeyCode::Char('h') => {
                 self.select_previous_column();
@@ -241,8 +241,40 @@ impl DigestApp {
             KeyCode::Char('l') => {
                 self.select_next_column();
             },
+            KeyCode::Enter => {
+                return self.select_row_column();
+            },
             _ => {}
         }
+
+        None
+    }
+
+    fn select_row_column(&mut self) -> Option<Action> {
+        if let Some(row_index) = self.entry_list.state.selected() {
+            let row = self.digest.as_ref().unwrap().entries.get(row_index).unwrap();
+
+            let columns = vec!["url", "score", "content", "discussion_url", "timestamp", "author"];
+            let column_index = self.selected_column_index.clone();
+            let column = columns.get(column_index).unwrap();
+
+            let url: Option<String> = {
+                if *column == "url" {
+                    row.url.clone()
+                } else if *column == "discussion_url" {
+                    row.discussion_url.clone()
+                } else {
+                    log::info!("Selected column {} - not going to doing anything for now", column);
+                    None
+                }
+            };
+
+            if let Some(url) = url {
+                return Some(Action::OpenUsingRenderingEngine(url));
+            }
+        }
+
+        None
     }
 
     fn select_previous(&mut self) {

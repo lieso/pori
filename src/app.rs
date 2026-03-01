@@ -72,7 +72,7 @@ impl App {
         Ok(())
     }
 
-    fn handle_navigation_key_event(&mut self, key_event: KeyEvent) {
+    fn handle_navigation_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match key_event.code {
             KeyCode::Char('q') => {
                 self.exit();
@@ -85,9 +85,11 @@ impl App {
             },
             _ => {}
         }
+
+        None
     }
 
-    fn handle_navigation_input_key_event(&mut self, key_event: KeyEvent) {
+    fn handle_navigation_input_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match key_event.code {
             KeyCode::Char(c) => {
                 self.context.append_char(c);
@@ -100,9 +102,11 @@ impl App {
             },
             _ => {}
         }
+
+        None
     }
 
-    fn handle_universal_key_event(&mut self, key_event: KeyEvent) {
+    fn handle_universal_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match key_event.code {
             KeyCode::Esc => {
                 self.context.set_mode(Mode::Navigation);
@@ -112,15 +116,23 @@ impl App {
             }
             _ => {}
         }
+
+        None
     }
 
     async fn handle_key_event(&mut self, key_event: KeyEvent) {
         self.handle_universal_key_event(key_event);
 
-        match self.context.get_mode().clone() {
-            Mode::Navigation => self.handle_navigation_key_event(key_event),
-            Mode::Interaction => self.ui.handle_key_event(key_event),
-            Mode::NavigationInput => self.handle_navigation_input_key_event(key_event),
+        let action = {
+            match self.context.get_mode().clone() {
+                Mode::Navigation => self.handle_navigation_key_event(key_event),
+                Mode::Interaction => self.ui.handle_key_event(key_event),
+                Mode::NavigationInput => self.handle_navigation_input_key_event(key_event),
+            }
+        };
+
+        if let Some(action) = action {
+            log::debug!("action: {:?}", action);
         }
     }
 
@@ -162,7 +174,7 @@ impl App {
         let title = Line::from(" pori ".bold());
         let block = Block::bordered()
             .title(title.centered())
-            .border_set(border::THICK);
+            .border_set(border::ROUNDED);
 
         let url = self.context.url_to_string();
 
