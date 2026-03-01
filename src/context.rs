@@ -70,6 +70,10 @@ impl Context {
         self.mode = mode;
     }
 
+    pub fn open(&self, url: String) {
+        std::process::Command::new("open").arg(&url).spawn();
+    }
+
     pub async fn visit(&self, json_schema: &str) -> Result<Digest, Errors> {
         let url = self.get_url().ok_or_else(|| {
             Errors::UnexpectedError("URL not found".into())

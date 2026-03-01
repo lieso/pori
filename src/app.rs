@@ -132,7 +132,7 @@ impl App {
         };
 
         if let Some(action) = action {
-            log::debug!("action: {:?}", action);
+            self.handle_action(action);
         }
     }
 
@@ -142,6 +142,15 @@ impl App {
 
     fn refresh(&mut self) {
         self.navigate();
+    }
+
+    fn handle_action(&mut self, action: Action) {
+        match action {
+            Action::Open(_url) => unimplemented!(),
+            Action::OpenUsingRenderingEngine(url) => {
+                self.context.open(url);
+            }
+        }
     }
 
     fn navigate(&mut self) {
