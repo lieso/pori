@@ -8,7 +8,7 @@ use ratatui::{
         palette::tailwind::{GREEN, BLUE, GRAY},
         Style,
     },
-    widgets::{Block, List, ListItem, ListState, StatefulWidget},
+    widgets::{List, ListItem, ListState, StatefulWidget},
 };
 
 use crate::prelude::*;
@@ -135,92 +135,101 @@ impl DigestApp {
     }
 
     pub fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        if let Some(digest) = &self.digest {
-            let items: Vec<ListItem> = digest
-                .entries
-                .iter()
-                .enumerate()
-                .map(|(index, entry)| {
-                    let is_row_selected = self.entry_list.state.selected() == Some(index);
+        let Some(digest) = &self.digest else { return; };
 
-                    let title = entry
-                        .title
-                        .clone()
-                        .unwrap_or_else(|| "Untitled".to_string());
+        let width = area.width;
+        let column_ratios_total = self.column_ratios.values().fold(0, |acc, &r| acc + r);
+        let column_ratio_widths: HashMap<String, u16> = self.column_ratios
+            .iter()
+            .map(|(k, &v)| {
+                (k.to_string(), width * (v as u16) / (column_ratios_total as u16))
+            })
+            .collect();
 
-                    let title_line = Line::styled(
-                        title,
-                        Style::default().fg(GRAY.c300).bold()
-                    );
+        let items: Vec<ListItem> = digest
+            .entries
+            .iter()
+            .enumerate()
+            .map(|(index, entry)| {
+                let is_row_selected = self.entry_list.state.selected() == Some(index);
 
-                    let mut spans = Vec::new();
+                let title = entry
+                    .title
+                    .clone()
+                    .unwrap_or_else(|| "Untitled".to_string());
 
-                    if let Some(url) = &entry.url {
-                        let minimized_url = minimize_url(&url);
-                        let style = {
-                            if is_row_selected {
-                                if spans.len() == self.selected_column_index {
-                                    Style::default().bold().fg(BLUE.c500)
-                                } else {
-                                    Style::default().fg(BLUE.c500)
-                                }
+                let title_line = Line::styled(
+                    title,
+                    Style::default().fg(GRAY.c300).bold()
+                );
+
+                let mut spans = Vec::new();
+
+                if let Some(url) = &entry.url {
+                    let minimized_url = minimize_url(&url);
+                    let style = {
+                        if is_row_selected {
+                            if spans.len() == self.selected_column_index {
+                                Style::default().bold().fg(BLUE.c500)
                             } else {
                                 Style::default().fg(BLUE.c500)
                             }
-                        };
-
-                        spans.push(
-                            Span::styled(format!("{}", minimized_url), style)
-                        );
-                    }
-
-                    if let Some(score) = &entry.score {
-                        spans.push(
-                            Span::styled(format!(" {}", score), Style::default().fg(GREEN.c500))
-                        );
-                    }
-
-                    if let Some(content) = &entry.content {
-                        spans.push(
-                            Span::styled(format!(" {}", content), Style::default().fg(GREEN.c500))
-                        );
-                    }
-
-                    if let Some(discussion_url) = &entry.discussion_url {
-                        spans.push(
-                            Span::styled(format!(" {}", discussion_url), Style::default().fg(BLUE.c500))
-                        );
-                    }
-
-                    if let Some(timestamp) = &entry.timestamp {
-                        spans.push(
-                            Span::styled(format!(" {}", timestamp), Style::default().fg(GREEN.c500))
-                        );
-                    }
-
-                    if let Some(author) = &entry.author {
-                        if let Some(author_name) = &author.name {
-                            spans.push(
-                                Span::styled(format!(" {}", author_name), Style::default().fg(GREEN.c500))
-                            );
+                        } else {
+                            Style::default().fg(BLUE.c500)
                         }
+                    };
+
+                    spans.push(
+                        Span::styled(format!("{}", minimized_url), style)
+                    );
+                }
+
+                if let Some(score) = &entry.score {
+                    spans.push(
+                        Span::styled(format!(" {}", score), Style::default().fg(GREEN.c500))
+                    );
+                }
+
+                if let Some(content) = &entry.content {
+                    spans.push(
+                        Span::styled(format!(" {}", content), Style::default().fg(GREEN.c500))
+                    );
+                }
+
+                if let Some(discussion_url) = &entry.discussion_url {
+                    spans.push(
+                        Span::styled(format!(" {}", discussion_url), Style::default().fg(BLUE.c500))
+                    );
+                }
+
+                if let Some(timestamp) = &entry.timestamp {
+                    spans.push(
+                        Span::styled(format!(" {}", timestamp), Style::default().fg(GREEN.c500))
+                    );
+                }
+
+                if let Some(author) = &entry.author {
+                    if let Some(author_name) = &author.name {
+                        spans.push(
+                            Span::styled(format!(" {}", author_name), Style::default().fg(GREEN.c500))
+                        );
                     }
+                }
 
-                    let details_line = Line::from(spans.clone());
+                let details_line = Line::from(spans.clone());
 
-                    let text = Text::from(vec![title_line, details_line, Line::from("")]);
+                let text = Text::from(vec![title_line, details_line, Line::from("")]);
 
-                    ListItem::new(text)
-                })
-            .collect();
+                ListItem::new(text)
+            })
+        .collect();
 
-            let list = List::new(items)
-                .highlight_style(Style::new().italic())
-                .highlight_symbol(">>")
-                .repeat_highlight_symbol(true);
+        let list = List::new(items)
+            .highlight_style(Style::new().italic())
+            .highlight_symbol(">>")
+            .repeat_highlight_symbol(true);
 
-            StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
-        }
+        StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
     }
 
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
