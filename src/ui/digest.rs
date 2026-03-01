@@ -238,7 +238,7 @@ impl DigestApp {
 
         let list = List::new(items)
             .highlight_symbol(">>")
-            .repeat_highlight_symbol(true);
+            .repeat_highlight_symbol(false);
 
         StatefulWidget::render(list, area, buf, &mut self.entry_list.state);
     }
