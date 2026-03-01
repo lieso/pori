@@ -139,7 +139,7 @@ impl DigestApp {
 
         let width = area.width;
         let column_ratios_total = self.column_ratios.values().fold(0, |acc, &r| acc + r);
-        let column_ratio_widths: HashMap<String, u16> = self.column_ratios
+        let column_widths: HashMap<String, u16> = self.column_ratios
             .iter()
             .map(|(k, &v)| {
                 (k.to_string(), width * (v as u16) / (column_ratios_total as u16))
@@ -179,39 +179,51 @@ impl DigestApp {
                         }
                     };
 
+                    let width = column_widths.get("url").unwrap();
+
                     spans.push(
-                        Span::styled(format!("{}", minimized_url), style)
+                        Span::styled(fit_to_width(&minimized_url, *width as usize), style)
                     );
                 }
 
                 if let Some(score) = &entry.score {
+                    let width = column_widths.get("score").unwrap();
+
                     spans.push(
-                        Span::styled(format!(" {}", score), Style::default().fg(GREEN.c500))
+                        Span::styled(fit_to_width(&score, *width as usize), Style::default().fg(GREEN.c500))
                     );
                 }
 
                 if let Some(content) = &entry.content {
+                    let width = column_widths.get("content").unwrap();
+
                     spans.push(
-                        Span::styled(format!(" {}", content), Style::default().fg(GREEN.c500))
+                        Span::styled(fit_to_width(&content, *width as usize), Style::default().fg(GREEN.c500))
                     );
                 }
 
                 if let Some(discussion_url) = &entry.discussion_url {
+                    let width = column_widths.get("discussion_url").unwrap();
+
                     spans.push(
-                        Span::styled(format!(" {}", discussion_url), Style::default().fg(BLUE.c500))
+                        Span::styled(fit_to_width(&discussion_url, *width as usize), Style::default().fg(BLUE.c500))
                     );
                 }
 
                 if let Some(timestamp) = &entry.timestamp {
+                    let width = column_widths.get("timestamp").unwrap();
+
                     spans.push(
-                        Span::styled(format!(" {}", timestamp), Style::default().fg(GREEN.c500))
+                        Span::styled(fit_to_width(&timestamp, *width as usize), Style::default().fg(GREEN.c500))
                     );
                 }
 
                 if let Some(author) = &entry.author {
+                    let width = column_widths.get("author").unwrap();
+
                     if let Some(author_name) = &author.name {
                         spans.push(
-                            Span::styled(format!(" {}", author_name), Style::default().fg(GREEN.c500))
+                            Span::styled(fit_to_width(&author_name, *width as usize), Style::default().fg(GREEN.c500))
                         );
                     }
                 }
@@ -225,7 +237,6 @@ impl DigestApp {
         .collect();
 
         let list = List::new(items)
-            .highlight_style(Style::new().italic())
             .highlight_symbol(">>")
             .repeat_highlight_symbol(true);
 
@@ -265,4 +276,9 @@ impl DigestApp {
     fn select_next_column(&mut self) {
         self.selected_column_index = self.selected_column_index + 1;
     }
+}
+
+fn fit_to_width(s: &str, width: usize) -> String {
+    if s.len() >= width { format!("{:.prec$}...", s, prec=width-1) }
+    else { format!("{:<width$}", s, width=width) }
 }
