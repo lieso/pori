@@ -211,15 +211,16 @@ impl DigestApp {
                     ));
                 }
 
-                if let Some(author) = &entry.author 
-                    && let Some(author_name) = &author.name {
-                        let width = column_widths.get("author").unwrap();
-                        let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
-                        spans.push(Span::styled(
-                            fit_to_width(author_name, *width as usize),
-                            style,
-                        ));
-                    }
+                if let Some(author) = &entry.author
+                    && let Some(author_name) = &author.name
+                {
+                    let width = column_widths.get("author").unwrap();
+                    let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
+                    spans.push(Span::styled(
+                        fit_to_width(author_name, *width as usize),
+                        style,
+                    ));
+                }
 
                 let details_line = Line::from(spans.clone());
 
