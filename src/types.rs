@@ -26,6 +26,6 @@ impl Mode {
 
 #[derive(Clone, Debug)]
 pub enum Action {
-    Open(String),
+    //Open(String),
     OpenUsingRenderingEngine(String),
 }

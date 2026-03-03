@@ -135,7 +135,7 @@ impl DigestApp {
         };
 
         let width = area.width;
-        let column_ratios_total = self.column_ratios.values().fold(0, |acc, &r| acc + r);
+        let column_ratios_total = self.column_ratios.values().sum::<u32>();
         let column_widths: HashMap<String, u16> = self
             .column_ratios
             .iter()
@@ -172,7 +172,7 @@ impl DigestApp {
                 };
 
                 if let Some(url) = &entry.url {
-                    let minimized_url = minimize_url(&url);
+                    let minimized_url = minimize_url(url);
                     let width = column_widths.get("url").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(BLUE.c500));
                     spans.push(Span::styled(
@@ -184,20 +184,20 @@ impl DigestApp {
                 if let Some(score) = &entry.score {
                     let width = column_widths.get("score").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
-                    spans.push(Span::styled(fit_to_width(&score, *width as usize), style));
+                    spans.push(Span::styled(fit_to_width(score, *width as usize), style));
                 }
 
                 if let Some(content) = &entry.content {
                     let width = column_widths.get("content").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
-                    spans.push(Span::styled(fit_to_width(&content, *width as usize), style));
+                    spans.push(Span::styled(fit_to_width(content, *width as usize), style));
                 }
 
                 if let Some(discussion_url) = &entry.discussion_url {
                     let width = column_widths.get("discussion_url").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(BLUE.c500));
                     spans.push(Span::styled(
-                        fit_to_width(&discussion_url, *width as usize),
+                        fit_to_width(discussion_url, *width as usize),
                         style,
                     ));
                 }
@@ -206,21 +206,20 @@ impl DigestApp {
                     let width = column_widths.get("timestamp").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
                     spans.push(Span::styled(
-                        fit_to_width(&timestamp, *width as usize),
+                        fit_to_width(timestamp, *width as usize),
                         style,
                     ));
                 }
 
-                if let Some(author) = &entry.author {
-                    if let Some(author_name) = &author.name {
+                if let Some(author) = &entry.author 
+                    && let Some(author_name) = &author.name {
                         let width = column_widths.get("author").unwrap();
                         let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
                         spans.push(Span::styled(
-                            fit_to_width(&author_name, *width as usize),
+                            fit_to_width(author_name, *width as usize),
                             style,
                         ));
                     }
-                }
 
                 let details_line = Line::from(spans.clone());
 
@@ -270,7 +269,7 @@ impl DigestApp {
                 .get(row_index)
                 .unwrap();
 
-            let columns = vec![
+            let columns = [
                 "url",
                 "score",
                 "content",
@@ -278,7 +277,7 @@ impl DigestApp {
                 "timestamp",
                 "author",
             ];
-            let column_index = self.selected_column_index.clone();
+            let column_index = self.selected_column_index;
             let column = columns.get(column_index).unwrap();
 
             let url: Option<String> = {
@@ -312,11 +311,11 @@ impl DigestApp {
     }
 
     fn select_previous_column(&mut self) {
-        self.selected_column_index = self.selected_column_index - 1;
+        self.selected_column_index -= 1;
     }
 
     fn select_next_column(&mut self) {
-        self.selected_column_index = self.selected_column_index + 1;
+        self.selected_column_index += 1;
     }
 }
 

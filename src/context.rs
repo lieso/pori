@@ -71,7 +71,7 @@ impl Context {
     }
 
     pub fn open(&self, url: String) {
-        std::process::Command::new("open").arg(&url).spawn();
+        let _ = std::process::Command::new("open").arg(&url).spawn();
     }
 
     pub async fn visit(&self, json_schema: &str) -> Result<Digest, Errors> {

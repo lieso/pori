@@ -3,7 +3,6 @@ use fern::Dispatch;
 use headless_chrome::{Browser, LaunchOptions};
 use log::LevelFilter;
 use parversion::provider::yaml::YamlFileProvider;
-use ratatui;
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;

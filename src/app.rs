@@ -37,8 +37,8 @@ impl App {
             ui: UI::new(),
             exit: false,
             loading: false,
-            tx: tx,
-            rx: rx,
+            tx,
+            rx,
         }
     }
 
@@ -146,7 +146,7 @@ impl App {
 
     fn handle_action(&mut self, action: Action) {
         match action {
-            Action::Open(_url) => unimplemented!(),
+            //Action::Open(_url) => unimplemented!(),
             Action::OpenUsingRenderingEngine(url) => {
                 self.context.open(url);
             }

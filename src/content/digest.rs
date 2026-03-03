@@ -117,10 +117,9 @@ pub struct Author {
 pub fn deserialize_to_digest(json_data: &str) -> Result<Digest, Box<dyn Error>> {
     let value: Value = serde_json::from_str(json_data)?;
 
-    if let Some(obj) = value.as_object() {
-        if let Some(digest_value) = obj.get("digest") {
+    if let Some(obj) = value.as_object()
+        && let Some(digest_value) = obj.get("digest") {
             return serde_json::from_value(digest_value.clone()).map_err(|e| e.into());
-        }
     }
 
     serde_json::from_value(value).map_err(|e| e.into())
