@@ -1,23 +1,23 @@
-use std::io;
-use std::time::Duration;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{
+    DefaultTerminal, Frame,
     buffer::Buffer,
     layout::Rect,
-    symbols::border,
-    text::{Line, Text, Span},
+    prelude::*,
     style::Stylize,
+    symbols::border,
+    text::{Line, Span, Text},
     widgets::{Block, Paragraph, Widget},
-    DefaultTerminal, Frame,
-    prelude::*
 };
+use std::io;
+use std::time::Duration;
 use tokio::sync::mpsc;
 
-use crate::prelude::*;
-use crate::context::Context;
-use crate::content::digest::Digest;
-use crate::ui::{UI, ContentType};
 use crate::content::ContentPayload;
+use crate::content::digest::Digest;
+use crate::context::Context;
+use crate::prelude::*;
+use crate::ui::{ContentType, UI};
 
 pub struct App {
     context: Context,
@@ -76,13 +76,13 @@ impl App {
         match key_event.code {
             KeyCode::Char('q') => {
                 self.exit();
-            },
+            }
             KeyCode::Char('r') => {
                 self.refresh();
-            },
+            }
             KeyCode::Enter => {
                 self.navigate();
-            },
+            }
             _ => {}
         }
 
@@ -99,7 +99,7 @@ impl App {
             }
             KeyCode::Enter => {
                 self.navigate();
-            },
+            }
             _ => {}
         }
 
@@ -193,9 +193,7 @@ impl App {
                 Span::raw(url),
             ])])
         } else {
-            Text::from(vec![Line::from(vec![
-                Span::raw(url),
-            ])])
+            Text::from(vec![Line::from(vec![Span::raw(url)])])
         };
 
         Paragraph::new(search_text)

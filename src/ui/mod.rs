@@ -1,14 +1,11 @@
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-};
-use crossterm::event::{KeyEvent};
+use crossterm::event::KeyEvent;
+use ratatui::{buffer::Buffer, layout::Rect};
 
 mod digest;
 
-use crate::prelude::*;
-use crate::content::digest::Digest;
 use crate::content::ContentPayload;
+use crate::content::digest::Digest;
+use crate::prelude::*;
 use digest::DigestApp;
 
 pub enum ContentType {
@@ -33,10 +30,10 @@ impl UI {
             ContentType::Digest => {
                 self.content_type = Some(ContentType::Digest);
                 self.digest = Some(DigestApp::new());
-            },
+            }
         }
     }
-    
+
     pub fn get_json_schema(&self) -> &str {
         match &self.content_type.as_ref().unwrap() {
             ContentType::Digest => Digest::get_json_schema(),
@@ -53,7 +50,7 @@ impl UI {
                     let app = &mut self.digest.as_mut().unwrap();
                     app.run(digest);
                 }
-            },
+            }
         }
     }
 
@@ -63,7 +60,7 @@ impl UI {
                 if let Some(app) = &mut self.digest {
                     app.render(area, buf);
                 }
-            },
+            }
             None => {}
         }
     }
@@ -74,7 +71,7 @@ impl UI {
                 if let Some(app) = &mut self.digest {
                     return app.handle_key_event(key_event);
                 }
-            },
+            }
             None => {}
         }
 

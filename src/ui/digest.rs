@@ -1,18 +1,18 @@
-use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    text::{Line, Text, Span},
     style::{
-        palette::tailwind::{GREEN, BLUE, GRAY},
         Style,
+        palette::tailwind::{BLUE, GRAY, GREEN},
     },
+    text::{Line, Span, Text},
     widgets::{List, ListItem, ListState, StatefulWidget},
 };
+use std::collections::HashMap;
 
-use crate::prelude::*;
 use crate::content::digest::Digest;
+use crate::prelude::*;
 
 struct EntryList {
     state: ListState,
@@ -31,7 +31,7 @@ impl DigestApp {
         Self {
             digest: None,
             entry_list: EntryList {
-                state: ListState::default()
+                state: ListState::default(),
             },
             column_ratios: HashMap::new(),
             column_count: 0,
@@ -40,68 +40,64 @@ impl DigestApp {
     }
 
     pub fn run(&mut self, digest: Digest) {
-        let column_count = digest
-            .entries
-            .iter()
-            .fold(0, |acc, entry| {
-                let field_presence: Vec<bool> = vec![
-                    entry.content.is_some(),
-                    entry.url.is_some(),
-                    entry.discussion_url.is_some(),
-                    entry.author.is_some(),
-                    entry.timestamp.is_some(),
-                    entry.score.is_some(),
-                ];
+        let column_count = digest.entries.iter().fold(0, |acc, entry| {
+            let field_presence: Vec<bool> = vec![
+                entry.content.is_some(),
+                entry.url.is_some(),
+                entry.discussion_url.is_some(),
+                entry.author.is_some(),
+                entry.timestamp.is_some(),
+                entry.score.is_some(),
+            ];
 
-                let count = field_presence.iter().fold(0, |acc, &present| {
-                    if present { acc + 1 } else { acc }
-                });
+            let count =
+                field_presence
+                    .iter()
+                    .fold(0, |acc, &present| if present { acc + 1 } else { acc });
 
-                if count > acc {
-                    count
-                } else {
+            if count > acc { count } else { acc }
+        });
+
+        let total_lengths: HashMap<String, usize> =
+            digest
+                .entries
+                .iter()
+                .fold(HashMap::new(), |mut acc, entry| {
+                    if let Some(content) = &entry.content {
+                        *acc.entry("content".to_string()).or_insert(0) += content.len();
+                    }
+
+                    if let Some(url) = &entry.url {
+                        *acc.entry("url".to_string()).or_insert(0) += url.len();
+                    }
+
+                    if let Some(discussion_url) = &entry.discussion_url {
+                        *acc.entry("discussion_url".to_string()).or_insert(0) +=
+                            discussion_url.len();
+                    }
+
+                    if let Some(author) = &entry.author {
+                        let mut total = 0;
+                        if let Some(name) = &author.name {
+                            total += name.len();
+                        }
+                        if let Some(url) = &author.url {
+                            total += url.len();
+                        }
+
+                        *acc.entry("author".to_string()).or_insert(0) += total;
+                    }
+
+                    if let Some(timestamp) = &entry.timestamp {
+                        *acc.entry("timestamp".to_string()).or_insert(0) += timestamp.len();
+                    }
+
+                    if let Some(score) = &entry.score {
+                        *acc.entry("score".to_string()).or_insert(0) += score.len();
+                    }
+
                     acc
-                }
-            });
-
-        let total_lengths: HashMap<String, usize> = digest
-            .entries
-            .iter()
-            .fold(HashMap::new(), |mut acc, entry| {
-                if let Some(content) = &entry.content {
-                    *acc.entry("content".to_string()).or_insert(0) += content.len();
-                }
-
-                if let Some(url) = &entry.url {
-                    *acc.entry("url".to_string()).or_insert(0) += url.len();
-                }
-
-                if let Some(discussion_url) = &entry.discussion_url {
-                    *acc.entry("discussion_url".to_string()).or_insert(0) += discussion_url.len();
-                }
-
-                if let Some(author) = &entry.author {
-                    let mut total = 0;
-                    if let Some(name) = &author.name {
-                        total += name.len();
-                    }
-                    if let Some(url) = &author.url {
-                        total += url.len();
-                    }
-
-                    *acc.entry("author".to_string()).or_insert(0) += total;
-                }
-
-                if let Some(timestamp) = &entry.timestamp {
-                    *acc.entry("timestamp".to_string()).or_insert(0) += timestamp.len();
-                }
-
-                if let Some(score) = &entry.score {
-                    *acc.entry("score".to_string()).or_insert(0) += score.len();
-                }
-
-                acc
-            });
+                });
 
         let average_lengths: HashMap<String, f64> = total_lengths
             .into_iter()
@@ -135,14 +131,20 @@ impl DigestApp {
     }
 
     pub fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        let Some(digest) = &self.digest else { return; };
+        let Some(digest) = &self.digest else {
+            return;
+        };
 
         let width = area.width;
         let column_ratios_total = self.column_ratios.values().fold(0, |acc, &r| acc + r);
-        let column_widths: HashMap<String, u16> = self.column_ratios
+        let column_widths: HashMap<String, u16> = self
+            .column_ratios
             .iter()
             .map(|(k, &v)| {
-                (k.to_string(), width * (v as u16) / (column_ratios_total as u16))
+                (
+                    k.to_string(),
+                    width * (v as u16) / (column_ratios_total as u16),
+                )
             })
             .collect();
 
@@ -158,10 +160,7 @@ impl DigestApp {
                     .clone()
                     .unwrap_or_else(|| "Untitled".to_string());
 
-                let title_line = Line::styled(
-                    title,
-                    Style::default().fg(GRAY.c300).bold()
-                );
+                let title_line = Line::styled(title, Style::default().fg(GRAY.c300).bold());
 
                 let mut spans = Vec::new();
 
@@ -177,7 +176,10 @@ impl DigestApp {
                     let minimized_url = minimize_url(&url);
                     let width = column_widths.get("url").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(BLUE.c500));
-                    spans.push(Span::styled(fit_to_width(&minimized_url, *width as usize), style));
+                    spans.push(Span::styled(
+                        fit_to_width(&minimized_url, *width as usize),
+                        style,
+                    ));
                 }
 
                 if let Some(score) = &entry.score {
@@ -195,20 +197,29 @@ impl DigestApp {
                 if let Some(discussion_url) = &entry.discussion_url {
                     let width = column_widths.get("discussion_url").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(BLUE.c500));
-                    spans.push(Span::styled(fit_to_width(&discussion_url, *width as usize), style));
+                    spans.push(Span::styled(
+                        fit_to_width(&discussion_url, *width as usize),
+                        style,
+                    ));
                 }
 
                 if let Some(timestamp) = &entry.timestamp {
                     let width = column_widths.get("timestamp").unwrap();
                     let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
-                    spans.push(Span::styled(fit_to_width(&timestamp, *width as usize), style));
+                    spans.push(Span::styled(
+                        fit_to_width(&timestamp, *width as usize),
+                        style,
+                    ));
                 }
 
                 if let Some(author) = &entry.author {
                     if let Some(author_name) = &author.name {
                         let width = column_widths.get("author").unwrap();
                         let style = col_style(spans.len(), Style::default().fg(GREEN.c500));
-                        spans.push(Span::styled(fit_to_width(&author_name, *width as usize), style));
+                        spans.push(Span::styled(
+                            fit_to_width(&author_name, *width as usize),
+                            style,
+                        ));
                     }
                 }
 
@@ -218,7 +229,7 @@ impl DigestApp {
 
                 ListItem::new(text)
             })
-        .collect();
+            .collect();
 
         let list = List::new(items)
             .highlight_symbol(">>")
@@ -231,19 +242,19 @@ impl DigestApp {
         match key_event.code {
             KeyCode::Char('h') => {
                 self.select_previous_column();
-            },
+            }
             KeyCode::Char('j') => {
                 self.select_next();
-            },
+            }
             KeyCode::Char('k') => {
                 self.select_previous();
-            },
+            }
             KeyCode::Char('l') => {
                 self.select_next_column();
-            },
+            }
             KeyCode::Enter => {
                 return self.select_row_column();
-            },
+            }
             _ => {}
         }
 
@@ -252,9 +263,22 @@ impl DigestApp {
 
     fn select_row_column(&mut self) -> Option<Action> {
         if let Some(row_index) = self.entry_list.state.selected() {
-            let row = self.digest.as_ref().unwrap().entries.get(row_index).unwrap();
+            let row = self
+                .digest
+                .as_ref()
+                .unwrap()
+                .entries
+                .get(row_index)
+                .unwrap();
 
-            let columns = vec!["url", "score", "content", "discussion_url", "timestamp", "author"];
+            let columns = vec![
+                "url",
+                "score",
+                "content",
+                "discussion_url",
+                "timestamp",
+                "author",
+            ];
             let column_index = self.selected_column_index.clone();
             let column = columns.get(column_index).unwrap();
 
@@ -264,7 +288,10 @@ impl DigestApp {
                 } else if *column == "discussion_url" {
                     row.discussion_url.clone()
                 } else {
-                    log::info!("Selected column {} - not going to doing anything for now", column);
+                    log::info!(
+                        "Selected column {} - not going to doing anything for now",
+                        column
+                    );
                     None
                 }
             };
@@ -295,6 +322,9 @@ impl DigestApp {
 }
 
 fn fit_to_width(s: &str, width: usize) -> String {
-    if s.len() >= width { format!("{:.prec$}...", s, prec=width-1) }
-    else { format!("{:<width$}", s, width=width) }
+    if s.len() >= width {
+        format!("{:.prec$}...", s, prec = width - 1)
+    } else {
+        format!("{:<width$}", s, width = width)
+    }
 }

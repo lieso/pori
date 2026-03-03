@@ -1,12 +1,12 @@
-use headless_chrome::{Browser};
-use parversion::provider::yaml::{YamlFileProvider};
-use std::sync::Arc;
-use parversion::translation;
-use parversion::prelude::{Options, Metadata};
+use headless_chrome::Browser;
 use parversion::document::DocumentType;
+use parversion::prelude::{Metadata, Options};
+use parversion::provider::yaml::YamlFileProvider;
+use parversion::translation;
+use std::sync::Arc;
 
-use crate::prelude::*;
 use crate::content::digest::{Digest, deserialize_to_digest};
+use crate::prelude::*;
 
 #[derive(Clone)]
 pub struct Context {
@@ -22,7 +22,7 @@ impl Context {
             browser,
             provider,
             url: None,
-            mode: Mode::NavigationInput
+            mode: Mode::NavigationInput,
         }
     }
 
@@ -33,11 +33,11 @@ impl Context {
     pub fn set_url(&mut self, url: String) {
         self.url = Some(url);
     }
-    
+
     pub fn has_url(&self) -> bool {
         self.url.is_some()
     }
-    
+
     pub fn url_to_string(&self) -> String {
         if let Some(url) = &self.url {
             url.clone()
@@ -75,16 +75,18 @@ impl Context {
     }
 
     pub async fn visit(&self, json_schema: &str) -> Result<Digest, Errors> {
-        let url = self.get_url().ok_or_else(|| {
-            Errors::UnexpectedError("URL not found".into())
-        })?;
+        let url = self
+            .get_url()
+            .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
 
         if !is_valid_url(&url) {
             log::warn!("url is not valid: {}", url);
             return Err(Errors::InvalidUrl);
         }
 
-        let tab = self.browser.new_tab()
+        let tab = self
+            .browser
+            .new_tab()
             .map_err(|e| Errors::BrowserError(format!("Could not create new tab: {}", e)))?;
 
         tab.navigate_to(&url)
@@ -93,14 +95,14 @@ impl Context {
         tab.wait_until_navigated()
             .map_err(|e| Errors::BrowserError(format!("Could not wait: {}", e)))?;
 
-        let document = tab.evaluate("document.documentElement.outerHTML", false)
+        let document = tab
+            .evaluate("document.documentElement.outerHTML", false)
             .map_err(|e| Errors::BrowserError(format!("Could not evaluate JavaScript: {}", e)))?
             .value
             .ok_or_else(|| Errors::BrowserError("No content returned".into()))?
             .as_str()
             .ok_or_else(|| Errors::BrowserError("Content is not a string".into()))?
             .to_string();
-
 
         let options = Options {
             ..Options::default()
@@ -117,11 +119,13 @@ impl Context {
             &options,
             &metadata,
             json_schema,
-        ).await.map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
+        )
+        .await
+        .map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
 
-        let digest = deserialize_to_digest(&result.document.data)
-            .map_err(|e| Errors::TranslationError(format!("Could not deserialize translated content: {}", e)))?;
-
+        let digest = deserialize_to_digest(&result.document.data).map_err(|e| {
+            Errors::TranslationError(format!("Could not deserialize translated content: {}", e))
+        })?;
 
         Ok(digest)
     }

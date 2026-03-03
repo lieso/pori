@@ -87,7 +87,7 @@ impl Digest {
     pub fn new() -> Self {
         Digest {
             title: None,
-            entries: Vec::new()
+            entries: Vec::new(),
         }
     }
 
