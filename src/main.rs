@@ -22,7 +22,7 @@ use crate::prelude::*;
 use crate::context::Context;
 use crate::app::App;
 
-const VERSION: &str = "0.0.0";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PROGRAM_NAME: &str = "pori";
 
 fn parse_arguments() -> clap::ArgMatches {
