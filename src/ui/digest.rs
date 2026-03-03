@@ -50,10 +50,9 @@ impl DigestApp {
                 entry.score.is_some(),
             ];
 
-            let count =
-                field_presence
-                    .iter()
-                    .fold(0, |acc, &present| if present { acc + 1 } else { acc });
+            let count = field_presence
+                .iter()
+                .fold(0, |acc, &present| if present { acc + 1 } else { acc });
 
             if count > acc { count } else { acc }
         });
