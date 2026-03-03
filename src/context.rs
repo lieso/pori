@@ -79,6 +79,11 @@ impl Context {
             Errors::UnexpectedError("URL not found".into())
         })?;
 
+        if !is_valid_url(&url) {
+            log::warn!("url is not valid: {}", url);
+            return Err(Errors::InvalidUrl);
+        }
+
         let tab = self.browser.new_tab()
             .map_err(|e| Errors::BrowserError(format!("Could not create new tab: {}", e)))?;
 
