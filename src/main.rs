@@ -96,6 +96,7 @@ fn init_logging() {
 }
 
 fn setup() {
+    #[cfg(debug_assertions)]
     init_logging();
 }
 
