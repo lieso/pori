@@ -16,6 +16,7 @@ mod prelude;
 mod types;
 mod ui;
 mod utilities;
+mod constants;
 
 use crate::app::App;
 use crate::context::Context;

@@ -18,6 +18,11 @@ use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
 use crate::ui::{ContentType, UI};
+use crate::constants::colors::{
+    STATUS_BAR_INTERACTION_COLOR,
+    STATUS_BAR_NAVIGATION_COLOR,
+    STATUS_BAR_NAVIGATION_INPUT_COLOR,
+};
 
 pub struct App {
     context: Context,
@@ -212,9 +217,17 @@ impl App {
     }
 
     fn render_status_bar(&mut self, area: Rect, buf: &mut Buffer) {
-        let mode = self.context.get_mode().as_str();
-        Paragraph::new(mode)
-            .style(Style::default())
+        let mode = self.context.get_mode();
+
+        let style = {
+            match mode {
+                Mode::Navigation => Style::default().fg(STATUS_BAR_NAVIGATION_COLOR),
+                Mode::Interaction => Style::default().fg(STATUS_BAR_INTERACTION_COLOR),
+                Mode::NavigationInput => Style::default().fg(STATUS_BAR_NAVIGATION_INPUT_COLOR),
+            }
+        };
+        Paragraph::new(mode.as_str())
+            .style(style)
             .render(area, buf);
     }
 }
