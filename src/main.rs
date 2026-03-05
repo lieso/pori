@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 mod app;
+mod constants;
 mod content;
 mod context;
 mod macros;
@@ -16,7 +17,6 @@ mod prelude;
 mod types;
 mod ui;
 mod utilities;
-mod constants;
 
 use crate::app::App;
 use crate::context::Context;

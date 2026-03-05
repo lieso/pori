@@ -1,7 +1,7 @@
 pub mod colors {
     use ratatui::style::{
-        palette::tailwind::{RED, BLUE, LIME},
         Color,
+        palette::tailwind::{BLUE, LIME, RED},
     };
 
     pub const STATUS_BAR_INTERACTION_COLOR: Color = RED.c300;

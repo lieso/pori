@@ -13,16 +13,14 @@ use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+use crate::constants::colors::{
+    STATUS_BAR_INTERACTION_COLOR, STATUS_BAR_NAVIGATION_COLOR, STATUS_BAR_NAVIGATION_INPUT_COLOR,
+};
 use crate::content::ContentPayload;
 use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
 use crate::ui::{ContentType, UI};
-use crate::constants::colors::{
-    STATUS_BAR_INTERACTION_COLOR,
-    STATUS_BAR_NAVIGATION_COLOR,
-    STATUS_BAR_NAVIGATION_INPUT_COLOR,
-};
 
 pub struct App {
     context: Context,
@@ -219,12 +217,8 @@ impl App {
     fn render_status_bar(&mut self, area: Rect, buf: &mut Buffer) {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ])
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(area);
-
 
         let mode = self.context.get_mode();
 
