@@ -217,6 +217,15 @@ impl App {
     }
 
     fn render_status_bar(&mut self, area: Rect, buf: &mut Buffer) {
+        let layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+            ])
+            .split(area);
+
+
         let mode = self.context.get_mode();
 
         let style = {
@@ -226,9 +235,15 @@ impl App {
                 Mode::NavigationInput => Style::default().fg(STATUS_BAR_NAVIGATION_INPUT_COLOR),
             }
         };
+
         Paragraph::new(mode.as_str())
             .style(style)
-            .render(area, buf);
+            .render(layout[0], buf);
+
+        Paragraph::new(format!("v{}", env!("CARGO_PKG_VERSION")))
+            .style(Style::default())
+            .alignment(Alignment::Right)
+            .render(layout[1], buf);
     }
 }
 
