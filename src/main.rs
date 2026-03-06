@@ -7,6 +7,7 @@ use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 mod app;
 mod constants;
@@ -68,6 +69,7 @@ async fn init_browser() -> Result<Browser, Errors> {
 
     Browser::new(LaunchOptions {
         headless: true,
+        idle_browser_timeout: Duration::MAX,
         ..Default::default()
     })
     .map_err(|e| Errors::BrowserError(format!("Could not start web browser: {}", e)))
