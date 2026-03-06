@@ -8,3 +8,5 @@ pub mod colors {
     pub const STATUS_BAR_NAVIGATION_COLOR: Color = BLUE.c300;
     pub const STATUS_BAR_NAVIGATION_INPUT_COLOR: Color = LIME.c300;
 }
+
+pub const HOLD_TO_REGENERATE_SECONDS: u64 = 10;
