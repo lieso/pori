@@ -61,14 +61,6 @@ pub const JSON_SCHEMA: &str = r#"
           "score": {
             "type": "string",
             "description": "The score or ranking of the content item, if applicable."
-          },
-          "tags": {
-            "type": "array",
-            "description": "A list of tags or categories associated with the content item.",
-            "items": {
-              "type": "string",
-              "description": "A tag item"
-            }
           }
         }
       }
@@ -105,7 +97,6 @@ pub struct ContentItem {
     pub author: Option<Author>,
     pub timestamp: Option<String>,
     pub score: Option<String>,
-    pub tags: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
