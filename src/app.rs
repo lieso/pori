@@ -1,4 +1,4 @@
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
@@ -91,7 +91,7 @@ impl App {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
             KeyCode::Char('r') => self.on_special_key_press(KeyCode::Char('r')),
-            KeyCode::Enter => self.navigate(),
+            KeyCode::Enter => self.navigate(false),
             _ => {
                 self.clear_key_state();
             }
@@ -109,7 +109,7 @@ impl App {
                 self.context.remove_last_char();
             }
             KeyCode::Enter => {
-                self.navigate();
+                self.navigate(false);
             }
             _ => {}
         }
@@ -208,12 +208,11 @@ impl App {
     }
 
     fn regenerate(&mut self) {
-        log::debug!("regenerate");
+        self.navigate(true);
     }
 
     fn refresh(&mut self) {
-        log::debug!("hold_start: {:?}", self.hold_start);
-        log::debug!("refresh");
+        self.navigate(false);
     }
 
     fn handle_action(&mut self, action: Action) {
@@ -225,7 +224,7 @@ impl App {
         }
     }
 
-    fn navigate(&mut self) {
+    fn navigate(&mut self, regenerate: bool) {
         self.loading = true;
 
         // TODO: infer content type ******************************************
@@ -239,7 +238,7 @@ impl App {
 
         tokio::spawn(async move {
             let digest: Digest = context_clone
-                .visit(&schema_clone)
+                .visit(&schema_clone, regenerate)
                 .await
                 .expect("Could not visit");
 

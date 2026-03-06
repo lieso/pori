@@ -74,7 +74,7 @@ impl Context {
         let _ = std::process::Command::new("open").arg(&url).spawn();
     }
 
-    pub async fn visit(&self, json_schema: &str) -> Result<Digest, Errors> {
+    pub async fn visit(&self, json_schema: &str, regenerate: bool) -> Result<Digest, Errors> {
         let url = self
             .get_url()
             .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
@@ -105,7 +105,9 @@ impl Context {
             .to_string();
 
         let options = Options {
-            ..Options::default()
+            origin: Some(url.clone()),
+            date: None,
+            regenerate,
         };
 
         let metadata = Metadata {
