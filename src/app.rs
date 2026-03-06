@@ -10,9 +10,10 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 use std::io;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
+use crate::constants::HOLD_TO_REGENERATE_SECONDS;
 use crate::constants::colors::{
     STATUS_BAR_INTERACTION_COLOR, STATUS_BAR_NAVIGATION_COLOR, STATUS_BAR_NAVIGATION_INPUT_COLOR,
 };
@@ -29,6 +30,12 @@ pub struct App {
     loading: bool,
     tx: mpsc::UnboundedSender<ContentPayload>,
     rx: mpsc::UnboundedReceiver<ContentPayload>,
+    double_tap_window: Duration,
+    held_key: Option<KeyCode>,
+    hold_start: Option<Instant>,
+    last_press: Option<Instant>,
+    double_tap_pending: bool,
+    regen_triggered:  bool,
 }
 
 impl App {
@@ -42,6 +49,12 @@ impl App {
             loading: false,
             tx,
             rx,
+            double_tap_window: Duration::from_millis(350),
+            held_key: None,
+            hold_start: None,
+            last_press: None,
+            double_tap_pending: false,
+            regen_triggered: false,
         }
     }
 
@@ -65,28 +78,23 @@ impl App {
 
     async fn handle_events(&mut self) -> io::Result<()> {
         if event::poll(Duration::from_millis(50))? {
-            match event::read()? {
-                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                    self.handle_key_event(key_event).await
-                }
-                _ => {}
-            };
+            if let Event::Key(key_event) = event::read()? {
+                self.handle_key_event(key_event).await;
+            }
         }
+
+        self.process_timers();
         Ok(())
     }
 
     fn handle_navigation_key_event(&mut self, key_event: KeyEvent) -> Option<Action> {
         match key_event.code {
-            KeyCode::Char('q') => {
-                self.exit();
+            KeyCode::Char('q') => self.exit(),
+            KeyCode::Char('r') => self.on_special_key_press(KeyCode::Char('r')),
+            KeyCode::Enter => self.navigate(),
+            _ => {
+                self.clear_key_state();
             }
-            KeyCode::Char('r') => {
-                self.refresh();
-            }
-            KeyCode::Enter => {
-                self.navigate();
-            }
-            _ => {}
         }
 
         None
@@ -139,12 +147,73 @@ impl App {
         }
     }
 
+    fn on_special_key_press(&mut self, code: KeyCode) {
+        let now = Instant::now();
+
+        if self.held_key != Some(code) {
+            self.clear_key_state();
+            self.held_key = Some(code);
+        }
+
+        if self.hold_start.is_none() {
+            self.hold_start = Some(now);
+            self.regen_triggered = false;
+        }
+
+        if self.double_tap_pending {
+            if let Some(last) = self.last_press {
+                if now.duration_since(last) > Duration::from_millis(100) && now.duration_since(last) <= self.double_tap_window {
+                    self.refresh();
+                    self.clear_key_state();
+                    return;
+                }
+            }
+        }
+
+        self.double_tap_pending = true;
+        self.last_press = Some(now);
+    }
+
+    fn process_timers(&mut self) {
+        if let Some(start) = self.hold_start {
+            if !self.regen_triggered
+                && start.elapsed() >= Duration::from_secs(HOLD_TO_REGENERATE_SECONDS)
+            {
+                self.regenerate();
+                self.regen_triggered = true;
+                self.double_tap_pending = false;
+            }
+        }
+
+        if self.double_tap_pending {
+            if let Some(last) = self.last_press {
+                if last.elapsed() > self.double_tap_window {
+                    self.double_tap_pending = false;
+                    self.last_press = None;
+                }
+            }
+        }
+    }
+
+    fn clear_key_state(&mut self) {
+        self.held_key = None;
+        self.hold_start = None;
+        self.last_press = None;
+        self.double_tap_pending = false;
+        self.regen_triggered = false;
+    }
+
     fn exit(&mut self) {
         self.exit = true;
     }
 
+    fn regenerate(&mut self) {
+        log::debug!("regenerate");
+    }
+
     fn refresh(&mut self) {
-        self.navigate();
+        log::debug!("hold_start: {:?}", self.hold_start);
+        log::debug!("refresh");
     }
 
     fn handle_action(&mut self, action: Action) {
