@@ -3,9 +3,11 @@ use parversion::document::DocumentType;
 use parversion::prelude::{Metadata, Options};
 use parversion::provider::yaml::YamlFileProvider;
 use parversion::translation;
+use parversion::organization::{organize_text_to_basis_graph};
 use std::sync::Arc;
 
 use crate::content::digest::{Digest, deserialize_to_digest};
+use crate::content::{Content, ContentType, ContentPayload};
 use crate::prelude::*;
 
 #[derive(Clone)]
@@ -74,74 +76,68 @@ impl Context {
         let _ = std::process::Command::new("open").arg(&url).spawn();
     }
 
-    pub async fn open(&self, regenerate: bool) -> Result<(), Errors> {
+    pub async fn open(&self, regenerate: bool) -> Result<ContentPayload, Errors> {
         log::trace!("In open");
 
         let document = self.fetch_document()?;
+        let url = self
+            .get_url()
+            .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
 
+        // Do we regenerate when guessing content type? How to avoid wasteful re-interpretation?
+        let options = Options {
+            origin: Some(url.clone()),
+            date: None,
+            regenerate: false,
+        };
 
+        let metadata = Metadata {
+            document_type: Some(DocumentType::Html),
+            origin: url.clone(),
+        };
 
+        let meta_context = organize_text_to_basis_graph(
+            self.provider.clone(),
+            document.clone(),
+            &options,
+            &metadata,
+        ).await.expect("Could not obtain basis graph");
 
-        unimplemented!()
+        let basis_graph = read_lock!(meta_context).get_basis_graph_clone();
+
+        let mut content_names = basis_graph.clone().unwrap().aliases.clone();
+        content_names.push(basis_graph.clone().unwrap().name.clone());
+
+        log::info!("Content has the following names: {:?}", content_names);
+
+        let content_type: Option<ContentType> = Content::match_content_names(content_names);
+
+        if let Some(content_type) = content_type {
+            let json_schema = Content::get_json_schema_by_content_type(&content_type);
+
+            let options = Options {
+                origin: Some(url.clone()),
+                date: None,
+                regenerate,
+            };
+
+            let result = translation::translate_text_to_package(
+                self.provider.clone(),
+                document,
+                &options,
+                &metadata,
+                &json_schema,
+            )
+            .await
+            .map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
+
+            let payload = Content::content_data_to_payload(&content_type, &result.document.data).expect("Could not deserialize translated content");
+
+            Ok(payload)
+        } else {
+            Err(Errors::UnexpectedContentType("Could not match content type with any of expected types".to_string()))
+        }
     }
-
-    //pub async fn visit(&self, json_schema: &str, regenerate: bool) -> Result<Digest, Errors> {
-    //    let url = self
-    //        .get_url()
-    //        .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
-
-    //    if !is_valid_url(&url) {
-    //        log::warn!("url is not valid: {}", url);
-    //        return Err(Errors::InvalidUrl);
-    //    }
-
-    //    let tab = self
-    //        .browser
-    //        .new_tab()
-    //        .map_err(|e| Errors::BrowserError(format!("Could not create new tab: {}", e)))?;
-
-    //    tab.navigate_to(&url)
-    //        .map_err(|e| Errors::BrowserError(format!("Could not navigate: {}", e)))?;
-
-    //    tab.wait_until_navigated()
-    //        .map_err(|e| Errors::BrowserError(format!("Could not wait: {}", e)))?;
-
-    //    let document = tab
-    //        .evaluate("document.documentElement.outerHTML", false)
-    //        .map_err(|e| Errors::BrowserError(format!("Could not evaluate JavaScript: {}", e)))?
-    //        .value
-    //        .ok_or_else(|| Errors::BrowserError("No content returned".into()))?
-    //        .as_str()
-    //        .ok_or_else(|| Errors::BrowserError("Content is not a string".into()))?
-    //        .to_string();
-
-    //    let options = Options {
-    //        origin: Some(url.clone()),
-    //        date: None,
-    //        regenerate,
-    //    };
-
-    //    let metadata = Metadata {
-    //        document_type: Some(DocumentType::Html),
-    //        origin: url.clone(),
-    //    };
-
-    //    let result = translation::translate_text_to_package(
-    //        self.provider.clone(),
-    //        document,
-    //        &options,
-    //        &metadata,
-    //        json_schema,
-    //    )
-    //    .await
-    //    .map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
-
-    //    let digest = deserialize_to_digest(&result.document.data).map_err(|e| {
-    //        Errors::TranslationError(format!("Could not deserialize translated content: {}", e))
-    //    })?;
-
-    //    Ok(digest)
-    //}
 
     fn fetch_document(&self) -> Result<String, Errors> {
         let url = self

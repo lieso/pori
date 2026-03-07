@@ -21,7 +21,7 @@ use crate::content::ContentPayload;
 use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
-use crate::ui::{ContentType, UI};
+use crate::ui::{UI};
 
 pub struct App {
     context: Context,

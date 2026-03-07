@@ -69,7 +69,7 @@ pub const JSON_SCHEMA: &str = r#"
 }
 "#;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Digest {
     pub title: Option<String>,
     pub entries: Vec<ContentItem>,
@@ -88,7 +88,7 @@ impl Digest {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ContentItem {
     pub title: Option<String>,
     pub content: Option<String>,
@@ -99,7 +99,7 @@ pub struct ContentItem {
     pub score: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Author {
     pub name: Option<String>,
     pub url: Option<String>,

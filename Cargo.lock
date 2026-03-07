@@ -2702,7 +2702,7 @@ dependencies = [
 [[package]]
 name = "parversion"
 version = "0.1.0"
-source = "git+https://github.com/lieso/parversion#eb03bf4098550d75350a1f2b51e3eccac740f281"
+source = "git+https://github.com/lieso/parversion#b7c061e0ec8edcf402cb326dfe60a0b8edb33556"
 dependencies = [
  "async-trait",
  "atty",

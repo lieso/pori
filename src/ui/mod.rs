@@ -3,14 +3,10 @@ use ratatui::{buffer::Buffer, layout::Rect};
 
 mod digest;
 
-use crate::content::ContentPayload;
+use crate::content::{ContentType, ContentPayload};
 use crate::content::digest::Digest;
 use crate::prelude::*;
 use digest::DigestApp;
-
-pub enum ContentType {
-    Digest,
-}
 
 pub struct UI {
     content_type: Option<ContentType>,
