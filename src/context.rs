@@ -70,8 +70,15 @@ impl Context {
         self.mode = mode;
     }
 
-    pub fn open(&self, url: String) {
+    pub fn open_using_system(&self, url: String) {
         let _ = std::process::Command::new("open").arg(&url).spawn();
+    }
+
+    pub async fn open(&self, regenerate: bool) -> Result<(), Errors> {
+        log::trace!("In open");
+
+
+        unimplemented!()
     }
 
     pub async fn visit(&self, json_schema: &str, regenerate: bool) -> Result<Digest, Errors> {

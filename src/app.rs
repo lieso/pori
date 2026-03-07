@@ -219,7 +219,7 @@ impl App {
         match action {
             //Action::Open(_url) => unimplemented!(),
             Action::OpenUsingRenderingEngine(url) => {
-                self.context.open(url);
+                self.context.open_using_system(url);
             }
         }
     }
@@ -227,25 +227,47 @@ impl App {
     fn navigate(&mut self, regenerate: bool) {
         self.loading = true;
 
-        // TODO: infer content type ******************************************
-        let content_type = ContentType::Digest;
-        self.ui.set_content_type(content_type);
-        // ******************************************
+        //// TODO: infer content type ******************************************
+        //let content_type = ContentType::Digest;
+        //self.ui.set_content_type(content_type);
+        //// ******************************************
+
+        //let context_clone = self.context.clone();
+        //let tx_clone = self.tx.clone();
+        //let schema_clone = self.ui.get_json_schema().to_string();
+
+        //tokio::spawn(async move {
+        //    let digest: Digest = context_clone
+        //        .visit(&schema_clone, regenerate)
+        //        .await
+        //        .expect("Could not visit");
+
+        //    let content_payload = ContentPayload::Digest(digest);
+
+        //    tx_clone.send(content_payload).unwrap();
+        //});
+        
+
+
+
 
         let context_clone = self.context.clone();
         let tx_clone = self.tx.clone();
-        let schema_clone = self.ui.get_json_schema().to_string();
 
         tokio::spawn(async move {
-            let digest: Digest = context_clone
-                .visit(&schema_clone, regenerate)
+
+            let result = context_clone
+                .open(regenerate)
                 .await
-                .expect("Could not visit");
+                .expect("Could not open URL");
 
-            let content_payload = ContentPayload::Digest(digest);
+            log::debug!("result: {:?}", result);
 
-            tx_clone.send(content_payload).unwrap();
         });
+
+
+
+
     }
 }
 
