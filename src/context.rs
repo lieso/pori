@@ -1,13 +1,13 @@
 use headless_chrome::Browser;
 use parversion::document::DocumentType;
+use parversion::organization::organize_text_to_basis_graph;
 use parversion::prelude::{Metadata, Options};
 use parversion::provider::yaml::YamlFileProvider;
 use parversion::translation;
-use parversion::organization::{organize_text_to_basis_graph};
 use std::sync::Arc;
 
 use crate::content::digest::{Digest, deserialize_to_digest};
-use crate::content::{Content, ContentType, ContentPayload};
+use crate::content::{Content, ContentPayload, ContentType};
 use crate::prelude::*;
 
 #[derive(Clone)]
@@ -101,7 +101,9 @@ impl Context {
             document.clone(),
             &options,
             &metadata,
-        ).await.expect("Could not obtain basis graph");
+        )
+        .await
+        .expect("Could not obtain basis graph");
 
         let basis_graph = read_lock!(meta_context).get_basis_graph_clone();
 
@@ -129,13 +131,18 @@ impl Context {
                 &json_schema,
             )
             .await
-            .map_err(|e| Errors::TranslationError(format!("Could not translate content: {:?}", e)))?;
+            .map_err(|e| {
+                Errors::TranslationError(format!("Could not translate content: {:?}", e))
+            })?;
 
-            let payload = Content::content_data_to_payload(&content_type, &result.document.data).expect("Could not deserialize translated content");
+            let payload = Content::content_data_to_payload(&content_type, &result.document.data)
+                .expect("Could not deserialize translated content");
 
             Ok(payload)
         } else {
-            Err(Errors::UnexpectedContentType("Could not match content type with any of expected types".to_string()))
+            Err(Errors::UnexpectedContentType(
+                "Could not match content type with any of expected types".to_string(),
+            ))
         }
     }
 

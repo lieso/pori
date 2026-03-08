@@ -21,7 +21,7 @@ use crate::content::ContentPayload;
 use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
-use crate::ui::{UI};
+use crate::ui::UI;
 
 pub struct App {
     context: Context,
@@ -35,7 +35,7 @@ pub struct App {
     hold_start: Option<Instant>,
     last_press: Option<Instant>,
     double_tap_pending: bool,
-    regen_triggered:  bool,
+    regen_triggered: bool,
 }
 
 impl App {
@@ -162,7 +162,9 @@ impl App {
 
         if self.double_tap_pending {
             if let Some(last) = self.last_press {
-                if now.duration_since(last) > Duration::from_millis(100) && now.duration_since(last) <= self.double_tap_window {
+                if now.duration_since(last) > Duration::from_millis(100)
+                    && now.duration_since(last) <= self.double_tap_window
+                {
                     self.refresh();
                     self.clear_key_state();
                     return;

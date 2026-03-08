@@ -3,8 +3,8 @@ use ratatui::{buffer::Buffer, layout::Rect};
 
 mod digest;
 
-use crate::content::{ContentType, ContentPayload};
 use crate::content::digest::Digest;
+use crate::content::{ContentPayload, ContentType};
 use crate::prelude::*;
 use digest::DigestApp;
 

@@ -20,12 +20,12 @@ pub struct Content {}
 
 impl Content {
     pub fn match_content_names(content_names: Vec<String>) -> Option<ContentType> {
-        let known_names = [
-            (DIGEST_NAMES, ContentType::Digest)
-        ];
+        let known_names = [(DIGEST_NAMES, ContentType::Digest)];
 
         for (names, content_type) in known_names {
-            let has_match = content_names.iter().any(|item| names.contains(&item.to_lowercase().as_str()));
+            let has_match = content_names
+                .iter()
+                .any(|item| names.contains(&item.to_lowercase().as_str()));
 
             if has_match {
                 return Some(content_type);
@@ -41,11 +41,17 @@ impl Content {
         }
     }
 
-    pub fn content_data_to_payload(content_type: &ContentType, data: &str) -> Result<ContentPayload, Errors> {
+    pub fn content_data_to_payload(
+        content_type: &ContentType,
+        data: &str,
+    ) -> Result<ContentPayload, Errors> {
         match content_type {
             ContentType::Digest => {
                 let digest: Digest = deserialize_to_digest(data).map_err(|e| {
-                    Errors::TranslationError(format!("Could not deserialize translated content: {}", e))
+                    Errors::TranslationError(format!(
+                        "Could not deserialize translated content: {}",
+                        e
+                    ))
                 })?;
 
                 Ok(ContentPayload::Digest(digest))
