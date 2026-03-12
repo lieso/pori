@@ -12,6 +12,8 @@ use ratatui::{
 use std::io;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
+use parversion::prelude::{ProgressEvent, ExecutionContext};
+use std::sync::{Arc, Mutex};
 
 use crate::constants::HOLD_TO_REGENERATE_SECONDS;
 use crate::constants::colors::{
@@ -22,7 +24,7 @@ use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
 use crate::ui::UI;
-use crate::loading_context::LoadingContext;
+use crate::loading_context::{LoadingContext, StageMessage};
 
 pub struct App {
     context: Context,
@@ -37,6 +39,7 @@ pub struct App {
     last_press: Option<Instant>,
     double_tap_pending: bool,
     regen_triggered: bool,
+    loading_context: Option<Arc<Mutex<LoadingContext>>>,
 }
 
 impl App {
@@ -56,6 +59,7 @@ impl App {
             last_press: None,
             double_tap_pending: false,
             regen_triggered: false,
+            loading_context: None
         }
     }
 
@@ -69,6 +73,8 @@ impl App {
                 self.loading = false;
                 self.context.set_mode(Mode::Interaction);
             }
+
+            log::debug!("self.loading_context: {:?}", self.loading_context);
         }
         Ok(())
     }
@@ -231,15 +237,56 @@ impl App {
         self.loading = true;
 
 
-        let loading_context = LoadingContext::new();
+        let loading_context = Arc::new(Mutex::new(LoadingContext::new()));
+        self.loading_context = Some(Arc::clone(&loading_context));
+
+
+
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let execution_context = ExecutionContext::with_progress(tx);
+
+
+
+        let loading_context_clone = Arc::clone(&loading_context);
+        tokio::spawn(async move {
+            while let Some(event) = rx.recv().await {
+                let mut loading_context = loading_context_clone.lock().unwrap();
+
+                match event {
+                    ProgressEvent::StageStart(stage) => {
+                        loading_context.stage_messages.push((stage.to_string(), Vec::new()));
+                    },
+                    ProgressEvent::StageDone(stage) => {
+                        if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
+                            messages.push(StageMessage {
+                                message: format!("{} complete", stage),
+                                tokens: None,
+                            });
+                        }
+                    },
+                    ProgressEvent::Event { stage, event_name, tokens } => {
+                        if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
+                            messages.push(StageMessage {
+                                message: event_name.to_string(),
+                                tokens: Some(tokens)
+                            });
+                        }
+
+                        *loading_context.stage_tokens.entry(stage.to_string()).or_insert(0) += tokens;
+                        loading_context.global_tokens += tokens;
+                    }
+                }
+            }
+        });
 
 
         let context_clone = self.context.clone();
+        let execution_context_clone = execution_context.clone();
         let tx_clone = self.tx.clone();
 
         tokio::spawn(async move {
             let content_payload: ContentPayload = context_clone
-                .open(&loading_context, regenerate)
+                .open(execution_context_clone, regenerate)
                 .await
                 .expect("Could not open URL");
 
