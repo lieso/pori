@@ -105,7 +105,7 @@ impl Context {
         .await
         .expect("Could not obtain basis graph");
 
-        let basis_graph = read_lock!(meta_context).get_basis_graph_clone();
+        let basis_graph = read_lock!(meta_context).get_basis_graph();
 
         let mut content_names = basis_graph.clone().unwrap().aliases.clone();
         content_names.push(basis_graph.clone().unwrap().name.clone());
