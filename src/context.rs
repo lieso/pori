@@ -1,14 +1,16 @@
 use headless_chrome::Browser;
 use parversion::document::DocumentType;
 use parversion::organization::organize_text_to_basis_graph;
-use parversion::prelude::{Metadata, Options};
+use parversion::prelude::{Metadata, Options, ExecutionContext};
 use parversion::provider::yaml::YamlFileProvider;
 use parversion::translation;
 use std::sync::Arc;
+use tokio::sync::mpsc;
 
 use crate::content::digest::{Digest, deserialize_to_digest};
 use crate::content::{Content, ContentPayload, ContentType};
 use crate::prelude::*;
+use crate::loading_context::LoadingContext;
 
 #[derive(Clone)]
 pub struct Context {
@@ -76,7 +78,7 @@ impl Context {
         let _ = std::process::Command::new("open").arg(&url).spawn();
     }
 
-    pub async fn open(&self, regenerate: bool) -> Result<ContentPayload, Errors> {
+    pub async fn open(&self, loading_context: &LoadingContext, regenerate: bool) -> Result<ContentPayload, Errors> {
         log::trace!("In open");
 
         let document = self.fetch_document()?;
@@ -101,6 +103,7 @@ impl Context {
             document.clone(),
             &options,
             &metadata,
+            ExecutionContext::new()
         )
         .await
         .expect("Could not obtain basis graph");
@@ -123,12 +126,22 @@ impl Context {
                 regenerate,
             };
 
+            let (tx, mut rx) = mpsc::unbounded_channel();
+            let execution_context = ExecutionContext::with_progress(tx);
+
+            tokio::spawn(async move {
+                while let Some(event) = rx.recv().await {
+                    println!("\x1b[38;2;255;0;255m{:?}\x1b[0m", event); // fuchsia
+                }
+            });
+
             let result = translation::translate_text_to_package(
                 self.provider.clone(),
                 document,
                 &options,
                 &metadata,
                 &json_schema,
+                execution_context.clone(),
             )
             .await
             .map_err(|e| {

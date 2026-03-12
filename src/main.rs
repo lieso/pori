@@ -18,6 +18,7 @@ mod prelude;
 mod types;
 mod ui;
 mod utilities;
+mod loading_context;
 
 use crate::app::App;
 use crate::context::Context;

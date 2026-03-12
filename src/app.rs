@@ -22,6 +22,7 @@ use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::prelude::*;
 use crate::ui::UI;
+use crate::loading_context::LoadingContext;
 
 pub struct App {
     context: Context,
@@ -229,12 +230,16 @@ impl App {
     fn navigate(&mut self, regenerate: bool) {
         self.loading = true;
 
+
+        let loading_context = LoadingContext::new();
+
+
         let context_clone = self.context.clone();
         let tx_clone = self.tx.clone();
 
         tokio::spawn(async move {
             let content_payload: ContentPayload = context_clone
-                .open(regenerate)
+                .open(&loading_context, regenerate)
                 .await
                 .expect("Could not open URL");
 
