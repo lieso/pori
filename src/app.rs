@@ -1,4 +1,5 @@
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use parversion::prelude::{ExecutionContext, ProgressEvent};
 use ratatui::{
     DefaultTerminal, Frame,
     buffer::Buffer,
@@ -10,10 +11,9 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 use std::io;
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-use parversion::prelude::{ProgressEvent, ExecutionContext};
-use std::sync::{Arc, RwLock};
 
 use crate::constants::HOLD_TO_REGENERATE_SECONDS;
 use crate::constants::colors::{
@@ -22,9 +22,9 @@ use crate::constants::colors::{
 use crate::content::ContentPayload;
 use crate::content::digest::Digest;
 use crate::context::Context;
+use crate::loading_context::{LoadingContext, StageMessage};
 use crate::prelude::*;
 use crate::ui::UI;
-use crate::loading_context::{LoadingContext, StageMessage};
 
 pub struct App {
     context: Context,
@@ -57,7 +57,7 @@ impl App {
             last_press: None,
             double_tap_pending: false,
             regen_triggered: false,
-            loading_context: None
+            loading_context: None,
         }
     }
 
@@ -243,25 +243,42 @@ impl App {
 
                 match event {
                     ProgressEvent::StageStart(stage) => {
-                        loading_context.stage_messages.push((stage.to_string(), Vec::new()));
-                    },
+                        loading_context
+                            .stage_messages
+                            .push((stage.to_string(), Vec::new()));
+                    }
                     ProgressEvent::StageDone(stage) => {
-                        if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
+                        if let Some((_, messages)) = loading_context
+                            .stage_messages
+                            .iter_mut()
+                            .find(|(s, _)| s == &stage)
+                        {
                             messages.push(StageMessage {
                                 message: format!("{} complete", stage),
                                 tokens: 0,
                             });
                         }
-                    },
-                    ProgressEvent::Event { stage, event_name, tokens } => {
-                        if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
+                    }
+                    ProgressEvent::Event {
+                        stage,
+                        event_name,
+                        tokens,
+                    } => {
+                        if let Some((_, messages)) = loading_context
+                            .stage_messages
+                            .iter_mut()
+                            .find(|(s, _)| s == &stage)
+                        {
                             messages.push(StageMessage {
                                 message: event_name.to_string(),
-                                tokens: tokens
+                                tokens: tokens,
                             });
                         }
 
-                        *loading_context.stage_tokens.entry(stage.to_string()).or_insert(0) += tokens;
+                        *loading_context
+                            .stage_tokens
+                            .entry(stage.to_string())
+                            .or_insert(0) += tokens;
                         loading_context.global_tokens += tokens;
                     }
                 }
@@ -309,12 +326,12 @@ impl App {
 
     fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
         if let Some(loading_context) = &self.loading_context {
-            let mut lines: Vec<Line> = vec![
-                Line::from(Span::styled(
-                    "Loading page",
-                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Magenta),
-                ))
-            ];
+            let mut lines: Vec<Line> = vec![Line::from(Span::styled(
+                "Loading page",
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Magenta),
+            ))];
 
             let guard = loading_context.read().unwrap();
 
@@ -322,7 +339,9 @@ impl App {
                 // Stage heading
                 lines.push(Line::from(Span::styled(
                     stage_name.clone(),
-                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Yellow),
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .fg(Color::Yellow),
                 )));
 
                 // Stage messages
@@ -366,7 +385,9 @@ impl App {
                 if let Some(tokens) = &guard.stage_tokens.get(stage_name) {
                     lines.push(Line::from(Span::styled(
                         format!("   Stage tokens: {}", tokens),
-                        Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+                        Style::default()
+                            .fg(Color::DarkGray)
+                            .add_modifier(Modifier::ITALIC),
                     )));
                 }
 
@@ -376,7 +397,9 @@ impl App {
             // Total tokens
             lines.push(Line::from(Span::styled(
                 format!("Total tokens: {}", &guard.global_tokens),
-                Style::default().add_modifier(Modifier::BOLD).fg(Color::Green),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Green),
             )));
 
             Paragraph::new(lines).render(area, buf);

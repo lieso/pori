@@ -13,12 +13,12 @@ mod app;
 mod constants;
 mod content;
 mod context;
+mod loading_context;
 mod macros;
 mod prelude;
 mod types;
 mod ui;
 mod utilities;
-mod loading_context;
 
 use crate::app::App;
 use crate::context::Context;

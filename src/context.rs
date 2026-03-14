@@ -1,7 +1,7 @@
 use headless_chrome::Browser;
 use parversion::document::DocumentType;
 use parversion::organization::organize_text_to_basis_graph;
-use parversion::prelude::{Metadata, Options, ExecutionContext};
+use parversion::prelude::{ExecutionContext, Metadata, Options};
 use parversion::provider::yaml::YamlFileProvider;
 use parversion::translation;
 use std::sync::Arc;
@@ -9,8 +9,8 @@ use tokio::sync::mpsc;
 
 use crate::content::digest::{Digest, deserialize_to_digest};
 use crate::content::{Content, ContentPayload, ContentType};
-use crate::prelude::*;
 use crate::loading_context::LoadingContext;
+use crate::prelude::*;
 
 #[derive(Clone)]
 pub struct Context {
@@ -81,7 +81,7 @@ impl Context {
     pub async fn open(
         &self,
         execution_context: Arc<ExecutionContext>,
-        regenerate: bool
+        regenerate: bool,
     ) -> Result<ContentPayload, Errors> {
         log::trace!("In open");
 
@@ -107,7 +107,7 @@ impl Context {
             document.clone(),
             &options,
             &metadata,
-            ExecutionContext::new()
+            ExecutionContext::new(),
         )
         .await
         .expect("Could not obtain basis graph");
