@@ -3,7 +3,6 @@ use ratatui::{buffer::Buffer, layout::Rect};
 
 mod digest;
 
-use crate::content::digest::Digest;
 use crate::content::{ContentPayload, ContentType};
 use crate::prelude::*;
 use digest::DigestApp;
@@ -29,12 +28,6 @@ impl UI {
             }
         }
     }
-
-    //pub fn get_json_schema(&self) -> &str {
-    //    match &self.content_type.as_ref().unwrap() {
-    //        ContentType::Digest => Digest::get_json_schema(),
-    //    }
-    //}
 
     pub fn run(&mut self, content_payload: ContentPayload) {
         match content_payload {

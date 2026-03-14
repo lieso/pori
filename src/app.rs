@@ -20,7 +20,6 @@ use crate::constants::colors::{
     STATUS_BAR_INTERACTION_COLOR, STATUS_BAR_NAVIGATION_COLOR, STATUS_BAR_NAVIGATION_INPUT_COLOR,
 };
 use crate::content::ContentPayload;
-use crate::content::digest::Digest;
 use crate::context::Context;
 use crate::loading_context::{LoadingContext, StageMessage};
 use crate::prelude::*;
@@ -80,11 +79,10 @@ impl App {
     }
 
     async fn handle_events(&mut self) -> io::Result<()> {
-        if event::poll(Duration::from_millis(50))? {
-            if let Event::Key(key_event) = event::read()? {
+        if event::poll(Duration::from_millis(50))?
+            && let Event::Key(key_event) = event::read()? {
                 self.handle_key_event(key_event).await;
             }
-        }
 
         self.process_timers();
         Ok(())
@@ -163,41 +161,36 @@ impl App {
             self.regen_triggered = false;
         }
 
-        if self.double_tap_pending {
-            if let Some(last) = self.last_press {
-                if now.duration_since(last) > Duration::from_millis(100)
+        if self.double_tap_pending
+            && let Some(last) = self.last_press
+                && now.duration_since(last) > Duration::from_millis(100)
                     && now.duration_since(last) <= self.double_tap_window
-                {
-                    self.refresh();
-                    self.clear_key_state();
-                    return;
-                }
-            }
-        }
+                        {
+                            self.refresh();
+                            self.clear_key_state();
+                            return;
+                        }
 
         self.double_tap_pending = true;
         self.last_press = Some(now);
     }
 
     fn process_timers(&mut self) {
-        if let Some(start) = self.hold_start {
-            if !self.regen_triggered
+        if let Some(start) = self.hold_start
+            && !self.regen_triggered
                 && start.elapsed() >= Duration::from_secs(HOLD_TO_REGENERATE_SECONDS)
             {
                 self.regenerate();
                 self.regen_triggered = true;
                 self.double_tap_pending = false;
             }
-        }
 
-        if self.double_tap_pending {
-            if let Some(last) = self.last_press {
-                if last.elapsed() > self.double_tap_window {
+        if self.double_tap_pending 
+            && let Some(last) = self.last_press
+                && last.elapsed() > self.double_tap_window {
                     self.double_tap_pending = false;
                     self.last_press = None;
                 }
-            }
-        }
     }
 
     fn clear_key_state(&mut self) {
@@ -251,7 +244,7 @@ impl App {
                         if let Some((_, messages)) = loading_context
                             .stage_messages
                             .iter_mut()
-                            .find(|(s, _)| s == &stage)
+                            .find(|(s, _)| s == stage)
                         {
                             messages.push(StageMessage {
                                 message: format!("{} complete", stage),
@@ -267,11 +260,11 @@ impl App {
                         if let Some((_, messages)) = loading_context
                             .stage_messages
                             .iter_mut()
-                            .find(|(s, _)| s == &stage)
+                            .find(|(s, _)| s == stage)
                         {
                             messages.push(StageMessage {
                                 message: event_name.to_string(),
-                                tokens: tokens,
+                                tokens,
                             });
                         }
 
@@ -354,13 +347,12 @@ impl App {
                 let mut grouped_messages: Vec<GroupedMessage> = Vec::new();
 
                 for message in messages {
-                    if let Some(last) = grouped_messages.last_mut() {
-                        if last.message == message.message {
+                    if let Some(last) = grouped_messages.last_mut()
+                        && last.message == message.message {
                             last.count += 1;
                             last.tokens += message.tokens;
                             continue;
                         }
-                    }
 
                     grouped_messages.push(GroupedMessage {
                         message: &message.message,

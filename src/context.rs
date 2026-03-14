@@ -5,11 +5,8 @@ use parversion::prelude::{ExecutionContext, Metadata, Options};
 use parversion::provider::yaml::YamlFileProvider;
 use parversion::translation;
 use std::sync::Arc;
-use tokio::sync::mpsc;
 
-use crate::content::digest::{Digest, deserialize_to_digest};
 use crate::content::{Content, ContentPayload, ContentType};
-use crate::loading_context::LoadingContext;
 use crate::prelude::*;
 
 #[derive(Clone)]
@@ -112,7 +109,7 @@ impl Context {
         .await
         .expect("Could not obtain basis graph");
 
-        let basis_graph = read_lock!(meta_context).get_basis_graph();
+        let basis_graph = meta_context.read().unwrap().get_basis_graph();
 
         let mut content_names = basis_graph.clone().unwrap().aliases.clone();
         content_names.push(basis_graph.clone().unwrap().name.clone());
@@ -135,7 +132,7 @@ impl Context {
                 document,
                 &options,
                 &metadata,
-                &json_schema,
+                json_schema,
                 execution_context.clone(),
             )
             .await
