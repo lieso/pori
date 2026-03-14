@@ -309,24 +309,60 @@ impl App {
 
     fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
         if let Some(loading_context) = &self.loading_context {
-            let mut lines: Vec<Line> = Vec::new();
+            let mut lines: Vec<Line> = vec![
+                Line::from(Span::styled(
+                    "Loading page",
+                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Magenta),
+                ))
+            ];
 
             let guard = loading_context.read().unwrap();
 
             for (stage_name, messages) in &guard.stage_messages {
-
+                // Stage heading
                 lines.push(Line::from(Span::styled(
                     stage_name.clone(),
                     Style::default().add_modifier(Modifier::BOLD).fg(Color::Yellow),
                 )));
 
-                for message in messages {
-                    lines.push(Line::from(Span::styled(
-                        format!("{} {} tokens", message.message, message.tokens),
-                        Style::default()
-                    )));
+                // Stage messages
+                struct GroupedMessage<'a> {
+                    message: &'a str,
+                    count: usize,
+                    tokens: u64,
                 }
 
+                let mut grouped_messages: Vec<GroupedMessage> = Vec::new();
+
+                for message in messages {
+                    if let Some(last) = grouped_messages.last_mut() {
+                        if last.message == message.message {
+                            last.count += 1;
+                            last.tokens += message.tokens;
+                            continue;
+                        }
+                    }
+
+                    grouped_messages.push(GroupedMessage {
+                        message: &message.message,
+                        count: 1,
+                        tokens: message.tokens,
+                    });
+                }
+
+                for group in grouped_messages {
+                    let mut text = format!("    - {}", group.message);
+
+                    if group.count > 1 {
+                        text.push_str(&format!(" ({})", group.count));
+                    }
+
+                    text.push_str(&format!(" {} tokens", group.tokens));
+
+                    lines.push(Line::from(text));
+                }
+
+                // Stage tokens
                 if let Some(tokens) = &guard.stage_tokens.get(stage_name) {
                     lines.push(Line::from(Span::styled(
                         format!("   Stage tokens: {}", tokens),
@@ -337,8 +373,9 @@ impl App {
                 lines.push(Line::default());
             }
 
+            // Total tokens
             lines.push(Line::from(Span::styled(
-                format!("Global tokens: {}", &guard.global_tokens),
+                format!("Total tokens: {}", &guard.global_tokens),
                 Style::default().add_modifier(Modifier::BOLD).fg(Color::Green),
             )));
 
