@@ -80,9 +80,10 @@ impl App {
 
     async fn handle_events(&mut self) -> io::Result<()> {
         if event::poll(Duration::from_millis(50))?
-            && let Event::Key(key_event) = event::read()? {
-                self.handle_key_event(key_event).await;
-            }
+            && let Event::Key(key_event) = event::read()?
+        {
+            self.handle_key_event(key_event).await;
+        }
 
         self.process_timers();
         Ok(())
@@ -163,13 +164,13 @@ impl App {
 
         if self.double_tap_pending
             && let Some(last) = self.last_press
-                && now.duration_since(last) > Duration::from_millis(100)
-                    && now.duration_since(last) <= self.double_tap_window
-                        {
-                            self.refresh();
-                            self.clear_key_state();
-                            return;
-                        }
+            && now.duration_since(last) > Duration::from_millis(100)
+            && now.duration_since(last) <= self.double_tap_window
+        {
+            self.refresh();
+            self.clear_key_state();
+            return;
+        }
 
         self.double_tap_pending = true;
         self.last_press = Some(now);
@@ -178,19 +179,20 @@ impl App {
     fn process_timers(&mut self) {
         if let Some(start) = self.hold_start
             && !self.regen_triggered
-                && start.elapsed() >= Duration::from_secs(HOLD_TO_REGENERATE_SECONDS)
-            {
-                self.regenerate();
-                self.regen_triggered = true;
-                self.double_tap_pending = false;
-            }
+            && start.elapsed() >= Duration::from_secs(HOLD_TO_REGENERATE_SECONDS)
+        {
+            self.regenerate();
+            self.regen_triggered = true;
+            self.double_tap_pending = false;
+        }
 
-        if self.double_tap_pending 
+        if self.double_tap_pending
             && let Some(last) = self.last_press
-                && last.elapsed() > self.double_tap_window {
-                    self.double_tap_pending = false;
-                    self.last_press = None;
-                }
+            && last.elapsed() > self.double_tap_window
+        {
+            self.double_tap_pending = false;
+            self.last_press = None;
+        }
     }
 
     fn clear_key_state(&mut self) {
@@ -348,11 +350,12 @@ impl App {
 
                 for message in messages {
                     if let Some(last) = grouped_messages.last_mut()
-                        && last.message == message.message {
-                            last.count += 1;
-                            last.tokens += message.tokens;
-                            continue;
-                        }
+                        && last.message == message.message
+                    {
+                        last.count += 1;
+                        last.tokens += message.tokens;
+                        continue;
+                    }
 
                     grouped_messages.push(GroupedMessage {
                         message: &message.message,
