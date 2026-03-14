@@ -10,7 +10,7 @@ pub struct LoadingContext {
 #[derive(Clone, Debug)]
 pub struct StageMessage {
     pub message: String,
-    pub tokens: Option<u64>,
+    pub tokens: u64,
 }
 
 impl LoadingContext {

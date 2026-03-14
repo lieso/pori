@@ -13,7 +13,7 @@ use std::io;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 use parversion::prelude::{ProgressEvent, ExecutionContext};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 
 use crate::constants::HOLD_TO_REGENERATE_SECONDS;
 use crate::constants::colors::{
@@ -30,7 +30,6 @@ pub struct App {
     context: Context,
     ui: UI,
     exit: bool,
-    loading: bool,
     tx: mpsc::UnboundedSender<ContentPayload>,
     rx: mpsc::UnboundedReceiver<ContentPayload>,
     double_tap_window: Duration,
@@ -39,7 +38,7 @@ pub struct App {
     last_press: Option<Instant>,
     double_tap_pending: bool,
     regen_triggered: bool,
-    loading_context: Option<Arc<Mutex<LoadingContext>>>,
+    loading_context: Option<Arc<RwLock<LoadingContext>>>,
 }
 
 impl App {
@@ -50,7 +49,6 @@ impl App {
             context,
             ui: UI::new(),
             exit: false,
-            loading: false,
             tx,
             rx,
             double_tap_window: Duration::from_millis(350),
@@ -70,11 +68,9 @@ impl App {
 
             if let Ok(content) = self.rx.try_recv() {
                 self.ui.run(content);
-                self.loading = false;
+                self.loading_context = None;
                 self.context.set_mode(Mode::Interaction);
             }
-
-            log::debug!("self.loading_context: {:?}", self.loading_context);
         }
         Ok(())
     }
@@ -234,23 +230,16 @@ impl App {
     }
 
     fn navigate(&mut self, regenerate: bool) {
-        self.loading = true;
-
-
-        let loading_context = Arc::new(Mutex::new(LoadingContext::new()));
+        let loading_context = Arc::new(RwLock::new(LoadingContext::new()));
         self.loading_context = Some(Arc::clone(&loading_context));
-
-
 
         let (tx, mut rx) = mpsc::unbounded_channel();
         let execution_context = ExecutionContext::with_progress(tx);
 
-
-
         let loading_context_clone = Arc::clone(&loading_context);
         tokio::spawn(async move {
             while let Some(event) = rx.recv().await {
-                let mut loading_context = loading_context_clone.lock().unwrap();
+                let mut loading_context = loading_context_clone.write().unwrap();
 
                 match event {
                     ProgressEvent::StageStart(stage) => {
@@ -260,7 +249,7 @@ impl App {
                         if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
                             messages.push(StageMessage {
                                 message: format!("{} complete", stage),
-                                tokens: None,
+                                tokens: 0,
                             });
                         }
                     },
@@ -268,7 +257,7 @@ impl App {
                         if let Some((_, messages)) = loading_context.stage_messages.iter_mut().find(|(s, _)| s == &stage) {
                             messages.push(StageMessage {
                                 message: event_name.to_string(),
-                                tokens: Some(tokens)
+                                tokens: tokens
                             });
                         }
 
@@ -278,7 +267,6 @@ impl App {
                 }
             }
         });
-
 
         let context_clone = self.context.clone();
         let execution_context_clone = execution_context.clone();
@@ -320,9 +308,41 @@ impl App {
     }
 
     fn render_body(&mut self, area: Rect, buf: &mut Buffer) {
-        if self.loading {
-            let loading_text = Paragraph::new("Loading...");
-            loading_text.render(area, buf);
+        if let Some(loading_context) = &self.loading_context {
+            let mut lines: Vec<Line> = Vec::new();
+
+            let guard = loading_context.read().unwrap();
+
+            for (stage_name, messages) in &guard.stage_messages {
+
+                lines.push(Line::from(Span::styled(
+                    stage_name.clone(),
+                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Yellow),
+                )));
+
+                for message in messages {
+                    lines.push(Line::from(Span::styled(
+                        format!("{} {} tokens", message.message, message.tokens),
+                        Style::default()
+                    )));
+                }
+
+                if let Some(tokens) = &guard.stage_tokens.get(stage_name) {
+                    lines.push(Line::from(Span::styled(
+                        format!("   Stage tokens: {}", tokens),
+                        Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+                    )));
+                }
+
+                lines.push(Line::default());
+            }
+
+            lines.push(Line::from(Span::styled(
+                format!("Global tokens: {}", &guard.global_tokens),
+                Style::default().add_modifier(Modifier::BOLD).fg(Color::Green),
+            )));
+
+            Paragraph::new(lines).render(area, buf);
         } else {
             self.ui.render(area, buf);
         }
