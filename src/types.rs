@@ -4,6 +4,7 @@ pub enum Errors {
     ProviderError(String),
     BrowserError(String),
     TranslationError(String),
+    NormalizationError(String),
     UnexpectedContentType(String),
     InvalidUrl,
 }

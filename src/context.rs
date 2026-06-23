@@ -1,9 +1,10 @@
 use headless_chrome::Browser;
-use parversion::document::DocumentType;
-use parversion::organization::organize_text_to_basis_graph;
 use parversion::prelude::{ExecutionContext, Metadata, Options};
-use parversion::provider::yaml::YamlFileProvider;
+use parversion::provider::sqlite::SqliteProvider;
 use parversion::translation;
+use parversion::normalization;
+use parversion::document_format::DocumentFormat;
+use parversion::document::{DocumentType, DocumentRole};
 use std::sync::Arc;
 
 use crate::content::{Content, ContentPayload, ContentType};
@@ -12,13 +13,13 @@ use crate::prelude::*;
 #[derive(Clone)]
 pub struct Context {
     browser: Browser,
-    provider: Arc<YamlFileProvider>,
+    provider: Arc<SqliteProvider>,
     url: Option<String>,
     mode: Mode,
 }
 
 impl Context {
-    pub fn new(provider: Arc<YamlFileProvider>, browser: Browser) -> Self {
+    pub fn new(provider: Arc<SqliteProvider>, browser: Browser) -> Self {
         Context {
             browser,
             provider,
@@ -87,33 +88,34 @@ impl Context {
             .get_url()
             .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
 
-        // Do we regenerate when guessing content type? How to avoid wasteful re-interpretation?
         let options = Options {
             origin: Some(url.clone()),
             date: None,
-            regenerate: false,
+            regenerate,
         };
 
         let metadata = Metadata {
             document_type: Some(DocumentType::Html),
             origin: url.clone(),
+            role: DocumentRole::Instance,
         };
 
-        let meta_context = organize_text_to_basis_graph(
+        let document_format = DocumentFormat::default();
+
+        let normalized_document = normalization::normalize_text_to_document(
             self.provider.clone(),
             document.clone(),
             &options,
             &metadata,
-            ExecutionContext::new(),
+            &document_format,
+            execution_context.clone()
         )
         .await
-        .expect("Could not obtain basis graph");
+        .map_err(|e| {
+            Errors::NormalizationError(format!("Could not normalize paage: {:?}", e))
+        })?;
 
-        let basis_graph = meta_context.read().unwrap().get_basis_graph();
-
-        let mut content_names = basis_graph.clone().unwrap().aliases.clone();
-        content_names.push(basis_graph.clone().unwrap().name.clone());
-
+        let mut content_names: Vec<String> = Vec::new();
         log::info!("Content has the following names: {:?}", content_names);
 
         let content_type: Option<ContentType> = Content::match_content_names(content_names);
@@ -127,12 +129,18 @@ impl Context {
                 regenerate,
             };
 
+            let schema_metadata = Metadata {
+                document_type: Some(DocumentType::Json),
+                origin: url.clone(),
+                role: DocumentRole::Schema,
+            };
+
             let result = translation::translate_text_to_package(
                 self.provider.clone(),
-                document,
+                (document, &metadata),
+                (json_schema.to_string(), &schema_metadata),
                 &options,
-                &metadata,
-                json_schema,
+                &document_format,
                 execution_context.clone(),
             )
             .await

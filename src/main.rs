@@ -2,7 +2,7 @@ use clap::{App as ClapApp, Arg};
 use fern::Dispatch;
 use headless_chrome::{Browser, LaunchOptions};
 use log::LevelFilter;
-use parversion::provider::yaml::YamlFileProvider;
+use parversion::provider::sqlite::SqliteProvider;
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
@@ -38,10 +38,10 @@ fn parse_arguments() -> clap::ArgMatches {
         .get_matches()
 }
 
-async fn init_provider() -> Result<Arc<YamlFileProvider>, Errors> {
+async fn init_provider() -> Result<Arc<SqliteProvider>, Errors> {
     log::info!("Initializing data provider...");
 
-    log::info!("Using yaml file provider");
+    log::info!("Using sqlite file provider");
 
     let data_dir: PathBuf = dirs::data_dir().ok_or_else(|| {
         Errors::ProviderError(
@@ -51,7 +51,7 @@ directory"
         )
     })?;
 
-    let provider_path = data_dir.join(PROGRAM_NAME).join("provider.yaml");
+    let provider_path = data_dir.join(PROGRAM_NAME).join("provider.sqlite");
 
     if let Some(parent_dir) = provider_path.parent() {
         fs::create_dir_all(parent_dir).expect("Unable to create directory");
@@ -59,9 +59,9 @@ directory"
 
     log::debug!("provider_path: {}", provider_path.display());
 
-    Ok(Arc::new(YamlFileProvider::new(
-        provider_path.to_string_lossy().into_owned(),
-    )))
+    Ok(Arc::new(SqliteProvider::new(
+        &provider_path.to_string_lossy().into_owned(),
+    ).expect("Could not initialize sqlite provider")))
 }
 
 async fn init_browser() -> Result<Browser, Errors> {
