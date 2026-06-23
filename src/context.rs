@@ -115,10 +115,7 @@ impl Context {
             Errors::NormalizationError(format!("Could not normalize paage: {:?}", e))
         })?;
 
-        let mut content_names: Vec<String> = Vec::new();
-        log::info!("Content has the following names: {:?}", content_names);
-
-        let content_type: Option<ContentType> = Content::match_content_names(content_names);
+        let content_type: Option<ContentType> = Content::match_content_names(normalized_document.metadata.semantic_content_types.unwrap());
 
         if let Some(content_type) = content_type {
             let json_schema = Content::get_json_schema_by_content_type(&content_type);
