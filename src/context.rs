@@ -1,3 +1,6 @@
+use std::fs;
+use std::env;
+use std::path::Path;
 use headless_chrome::Browser;
 use parversion::prelude::{ExecutionContext, Metadata, Options};
 use parversion::provider::sqlite::SqliteProvider;
@@ -88,6 +91,15 @@ impl Context {
             .get_url()
             .ok_or_else(|| Errors::UnexpectedError("URL not found".into()))?;
 
+        #[cfg(debug_assertions)]
+        {
+            self.debug_document(&url, "input.html", &document);
+        }
+
+
+
+
+
         let options = Options {
             origin: Some(url.clone()),
             date: None,
@@ -115,6 +127,13 @@ impl Context {
             Errors::NormalizationError(format!("Could not normalize paage: {:?}", e))
         })?;
 
+        #[cfg(debug_assertions)]
+        {
+            self.debug_document(&url, "normalized.json", &normalized_document.to_string());
+        }
+
+
+
         let content_type: Option<ContentType> = Content::match_content_names(normalized_document.metadata.semantic_content_types.unwrap());
 
         if let Some(content_type) = content_type {
@@ -132,7 +151,7 @@ impl Context {
                 role: DocumentRole::Schema,
             };
 
-            let result = translation::translate_text_to_package(
+            let translated_document = translation::translate_text_to_document(
                 self.provider.clone(),
                 (document, &metadata),
                 (json_schema.to_string(), &schema_metadata),
@@ -145,7 +164,12 @@ impl Context {
                 Errors::TranslationError(format!("Could not translate content: {:?}", e))
             })?;
 
-            let payload = Content::content_data_to_payload(&content_type, &result.document.data)
+            #[cfg(debug_assertions)]
+            {
+                self.debug_document(&url, "translated.json", &translated_document.to_string());
+            }
+
+            let payload = Content::content_data_to_payload(&content_type, &translated_document.data)
                 .expect("Could not deserialize translated content");
 
             Ok(payload)
@@ -187,5 +211,15 @@ impl Context {
             .to_string();
 
         Ok(document)
+    }
+
+    fn debug_document(&self, dir_name: &str, name: &str, content: &str) {
+        let debug_subdir = to_safe_dir_name(&dir_name);
+        let path = env::current_dir().expect("Could not getting current directory");
+        let path = path.join("debug").join(debug_subdir);
+        fs::create_dir_all(&path).expect("Could not create directory");
+
+        let input_document_path = Path::new(&path).join(name);
+        fs::write(input_document_path, content).expect("Could not write to file");
     }
 }
